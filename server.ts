@@ -1,3 +1,10 @@
+/**
+ * ARQUIVO: SERVER.TS
+ * 
+ * Este é o coração do seu Backend. Ele utiliza Express (um framework para Node.js)
+ * para criar uma API que gerencia usuários e autenticação.
+ */
+
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
@@ -8,16 +15,21 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
+/* Carrega as variáveis do arquivo .env para o process.env */
 dotenv.config();
 
+/* Configurações de caminho para módulos ES */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- Database Setup ---
-// We use SQLite for a local, private, and "detached" database.
+/**
+ * CONFIGURAÇÃO DO BANCO DE DADOS (SQLite)
+ * Utilizamos o SQLite por ser um banco de dados local, leve e que não requer servidor externo.
+ * O arquivo 'database.db' será criado automaticamente na raiz.
+ */
 const db = new Database('database.db');
 
-// Create users table
+/* Criação da tabela de usuários caso ela não exista */
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +39,11 @@ db.exec(`
   )
 `);
 
-// Migration: Add missing columns if they don't exist
+/**
+ * MIGRAÇÕES DE BANCO DE DADOS
+ * Este bloco garante que, se adicionarmos novas colunas no futuro, elas sejam 
+ * criadas automaticamente sem apagar os dados existentes.
+ */
 const columns = db.prepare("PRAGMA table_info(users)").all() as any[];
 const columnNames = columns.map(c => c.name);
 
@@ -40,31 +56,40 @@ const migrations = [
 
 migrations.forEach(m => {
   if (!columnNames.includes(m.name)) {
-    console.log(`Adding column ${m.name} to users table...`);
+    console.log(`Adicionando coluna ${m.name} à tabela users...`);
     db.exec(`ALTER TABLE users ADD COLUMN ${m.name} ${m.type}`);
   }
 });
 
+/**
+ * FUNÇÃO PRINCIPAL: startServer
+ * Inicializa o servidor Express e configura as rotas da API.
+ */
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  /* Chave secreta para o JWT (Token de Autenticação) */
   const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 
+  /* Middlewares: CORS permite acesso de outros domínios, JSON permite ler corpos de requisição */
   app.use(cors());
   app.use(express.json());
 
-  // --- Auth Routes ---
+  // --- ROTAS DE AUTENTICAÇÃO ---
 
-  // 1. Register
+  /**
+   * ROTA: POST /api/auth/register
+   * Cria um novo usuário no sistema.
+   */
   app.post('/api/auth/register', async (req, res) => {
     const { username, password, fullName, email, birthDate } = req.body;
-    console.log('Register attempt:', { username, fullName, email, birthDate });
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username e senha são obrigatórios' });
     }
 
     try {
+      /* Criptografa a senha antes de salvar (Segurança!) */
       const hashedPassword = await bcrypt.hash(password, 12);
       
       const insert = db.prepare('INSERT INTO users (username, password, full_name, email, birth_date) VALUES (?, ?, ?, ?, ?)');
@@ -79,10 +104,12 @@ async function startServer() {
     }
   });
 
-  // 2. Login
+  /**
+   * ROTA: POST /api/auth/login
+   * Valida as credenciais e retorna um Token JWT.
+   */
   app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Login attempt:', username);
 
     try {
       const user: any = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
@@ -91,12 +118,14 @@ async function startServer() {
         return res.status(401).json({ error: 'Credenciais inválidas' });
       }
 
+      /* Compara a senha digitada com a senha criptografada no banco */
       const isMatch = await bcrypt.compare(password, user.password);
 
       if (!isMatch) {
         return res.status(401).json({ error: 'Credenciais inválidas' });
       }
 
+      /* Gera o Token JWT que expira em 24 horas */
       const token = jwt.sign(
         { id: user.id, username: user.username },
         JWT_SECRET,
@@ -119,7 +148,10 @@ async function startServer() {
     }
   });
 
-  // --- Protected Route Example ---
+  /**
+   * MIDDLEWARE: authenticateToken
+   * Verifica se o usuário está logado antes de permitir acesso a rotas protegidas.
+   */
   const authenticateToken = (req: any, res: any, next: any) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -133,8 +165,11 @@ async function startServer() {
     });
   };
 
+  /**
+   * ROTA: GET /api/auth/me
+   * Retorna os dados do usuário logado baseado no Token.
+   */
   app.get('/api/auth/me', authenticateToken, (req: any, res) => {
-    console.log('Fetch profile for user ID:', req.user.id);
     try {
       const user: any = db.prepare('SELECT id, username, full_name, email, birth_date, two_factor_enabled FROM users WHERE id = ?').get(req.user.id);
       if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
@@ -154,7 +189,11 @@ async function startServer() {
     }
   });
 
-  // --- Vite Middleware ---
+  /**
+   * INTEGRAÇÃO COM VITE
+   * Em desenvolvimento, o Express usa o middleware do Vite para servir o Frontend.
+   * Em produção, ele serve os arquivos estáticos da pasta 'dist'.
+   */
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -169,8 +208,9 @@ async function startServer() {
     });
   }
 
+  /* Inicia a escuta do servidor na porta 3000 */
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
   });
 }
 

@@ -1,8 +1,20 @@
+# ARQUIVOS E PASTAS IGNORADOS PELO GIT
+# Este arquivo diz ao Git quais arquivos não devem ser enviados para o repositório.
+
+# Dependências instaladas (muito pesadas para o Git)
 node_modules/
+
+# Pastas de build e saída (geradas automaticamente)
 build/
 dist/
 coverage/
+
+# Arquivos de sistema e logs
 .DS_Store
 *.log
+
+# Arquivos de ambiente (contêm senhas e chaves secretas)
 .env*
+
+# Mas não ignore o exemplo de ambiente
 !.env.example

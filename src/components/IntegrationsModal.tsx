@@ -1,4 +1,25 @@
+/**
+ * COMPONENTE: INTEGRATIONSMODAL (MODAL DE INTEGRAÇÕES)
+ * 
+ * Este modal é o portal de conexão entre o TaskFlow e o mundo externo.
+ * Ele permite que o usuário conecte ferramentas como Trello, Notion, Slack e Google Sheets.
+ * 
+ * Funcionalidades principais:
+ * - Listagem de serviços suportados com ícones e descrições.
+ * - Autenticação OAuth (ex: Google Sheets) via popup.
+ * - Configuração manual de chaves de API para outros serviços.
+ * - Persistência das chaves de API no localStorage para uso futuro.
+ * - Sincronização manual de dados entre as plataformas.
+ * 
+ * Estilo Visual (Playful Soft UI):
+ * - Cards de integração com cantos arredondados (`rounded-[2rem]`) e bordas 3D.
+ * - Feedback visual de conexão (verde para conectado, cinza para desconectado).
+ * - Painéis expansíveis para configuração de chaves de API.
+ * - Banner de sincronização escuro com efeito de brilho e ícone animado.
+ */
+
 import React, { useState, useEffect } from 'react';
+/* Importação de componentes de diálogo do Radix UI estilizados para o projeto */
 import { 
   Dialog, 
   DialogContent, 
@@ -6,10 +27,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/src/components/ui/dialog";
+/* Importação de ícones da biblioteca Lucide-React para ilustrar os serviços */
 import { 
   Share2, 
   Check, 
-  ExternalLink, 
   RefreshCw,
   AlertCircle,
   Database,
@@ -17,17 +38,22 @@ import {
   MessageSquare,
   BarChart3,
   Settings2,
-  Key,
-  ChevronDown,
   ChevronUp,
   StickyNote
 } from "lucide-react";
+/* Importação de componentes de UI base do design system */
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
+/* Biblioteca de notificações toast para feedback de ações */
 import { toast } from "sonner";
+/* Utilitário para manipulação inteligente de classes CSS */
 import { cn } from "@/src/lib/utils";
 
+/**
+ * INTERFACE: Integration
+ * Define a estrutura de dados de uma integração individual.
+ */
 interface Integration {
   id: string;
   name: string;
@@ -38,13 +64,21 @@ interface Integration {
   authUrl?: string;
 }
 
+/**
+ * INTERFACE: IntegrationsModalProps
+ * Define as funções e estados que o modal precisa para operar.
+ */
 interface IntegrationsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSync: () => void;
+  isOpen: boolean; /* Controla se o modal está visível */
+  onClose: () => void; /* Função para fechar o modal */
+  onSync: () => void; /* Função para disparar a sincronização de dados */
 }
 
+/**
+ * COMPONENTE: IntegrationsModal
+ */
 export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModalProps) {
+  /* ESTADO: Lista de integrações disponíveis e seus estados de conexão */
   const [integrations, setIntegrations] = useState<Integration[]>([
     { id: 'google-sheets', name: 'Google Planilhas', description: 'Sincronize tarefas de suas planilhas.', icon: Database, category: 'tarefas', connected: false },
     { id: 'trello', name: 'Trello', description: 'Importe cartões de seus quadros.', icon: Layout, category: 'tarefas', connected: false },
@@ -55,8 +89,11 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
     { id: 'google-keep', name: 'Google Keep', description: 'Sincronize suas notas e lembretes.', icon: StickyNote, category: 'tarefas', connected: false },
   ]);
 
+  /* ESTADOS DE UI: Controle de carregamento e expansão de painéis */
   const [isSyncing, setIsSyncing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  /* ESTADO: Armazenamento de chaves de API (Inicializado a partir do localStorage) */
   const [apiKeys, setApiKeys] = useState<Record<string, Record<string, string>>>(() => {
     const defaults = {
       trello: { key: '', token: '' },
@@ -71,47 +108,65 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
     
     try {
       const parsed = JSON.parse(saved);
-      // Merge saved with defaults to ensure new integrations (like google-keep) are present
-      return {
-        ...defaults,
-        ...parsed
-      };
+      /* Mescla os valores salvos com os padrões para evitar erros de campos ausentes */
+      return { ...defaults, ...parsed };
     } catch (e) {
       return defaults;
     }
   });
 
+  /**
+   * EFEITO: PERSISTÊNCIA
+   * Salva as chaves de API no localStorage sempre que houver uma alteração.
+   */
   useEffect(() => {
     localStorage.setItem('taskflow_api_keys', JSON.stringify(apiKeys));
   }, [apiKeys]);
 
+  /**
+   * EFEITO: OAUTH LISTENER
+   * Escuta mensagens de sucesso vindas de popups de autenticação externa.
+   */
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      /* Verifica se a mensagem é um sinal de sucesso de autenticação */
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
         const provider = event.data.provider;
+        /* Marca a integração como conectada no estado local */
         setIntegrations(prev => prev.map(i => i.id === provider ? { ...i, connected: true } : i));
         toast.success(`${provider === 'google' ? 'Google' : provider} conectado com sucesso!`);
-        handleSync();
+        handleSync(); /* Sincroniza os dados imediatamente após conectar */
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  /**
+   * FUNÇÃO: handleConnect
+   * Inicia o fluxo de conexão. Para Google, abre um popup. Para outros, expande o formulário de chaves.
+   */
   const handleConnect = async (id: string) => {
     if (id === 'google-sheets') {
       try {
+        /* Busca a URL de autorização do backend */
         const response = await fetch('/api/auth/google/url');
         const { url } = await response.json();
+        /* Abre o popup do Google */
         window.open(url, 'google_oauth', 'width=600,height=700');
       } catch (error) {
-        toast.error("Erro ao iniciar autenticação com Google");
+        toast.error("Erro ao iniciar autenticação com Google. Tente novamente.");
       }
     } else {
+      /* Alterna a expansão do painel de configuração manual */
       setExpandedId(expandedId === id ? null : id);
     }
   };
 
+  /**
+   * FUNÇÃO: handleKeyChange
+   * Atualiza o valor de uma chave de API específica no estado.
+   */
   const handleKeyChange = (integrationId: string, field: string, value: string) => {
     setApiKeys(prev => ({
       ...prev,
@@ -122,20 +177,29 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
     }));
   };
 
+  /**
+   * UTILITÁRIO: isConfigured
+   * Verifica se todos os campos necessários para uma integração estão preenchidos.
+   */
   const isConfigured = (id: string) => {
     if (id === 'google-sheets') return integrations.find(i => i.id === id)?.connected;
     const keys = apiKeys[id];
     if (!keys) return false;
+    /* Verifica se todas as chaves do objeto têm valor */
     return Object.values(keys).every(v => typeof v === 'string' && v.length > 0);
   };
 
+  /**
+   * FUNÇÃO: handleSync
+   * Dispara o processo de sincronização e gerencia o estado de carregamento.
+   */
   const handleSync = async () => {
     setIsSyncing(true);
     try {
-      await onSync();
-      toast.success("Dados sincronizados com sucesso!");
+      await onSync(); /* Chama a função de sincronização passada pelo Dashboard */
+      toast.success("Dados sincronizados com sucesso! Suas missões estão atualizadas.");
     } catch (error) {
-      toast.error("Erro ao sincronizar dados.");
+      toast.error("Erro ao sincronizar dados. Verifique suas conexões.");
     } finally {
       setIsSyncing(false);
     }
@@ -143,19 +207,25 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="px-1">
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <Share2 className="w-6 h-6 text-slate-900" />
-            Integrações
+      {/* CONTEÚDO DO MODAL: Estilo Soft UI com scroll interno e bordas 3D */}
+      <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] sm:rounded-[3.5rem] border-4 border-slate-200 p-6 sm:p-10 shadow-2xl">
+        
+        {/* CABEÇALHO: Título gamificado e descrição */}
+        <DialogHeader className="px-2 sm:px-4 space-y-4 sm:space-y-6">
+          <DialogTitle className="text-2xl sm:text-4xl font-black flex items-center gap-4 sm:gap-6 text-slate-900 tracking-tighter italic uppercase">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-me-blue rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shadow-xl sm:shadow-2xl border-b-4 sm:border-b-8 border-blue-800 shrink-0">
+              <Share2 className="w-6 h-6 sm:w-9 sm:h-9 text-white" />
+            </div>
+            Conectar Mundos
           </DialogTitle>
-          <DialogDescription>
-            Conecte suas ferramentas favoritas para centralizar todas as suas tarefas no TaskFlow.
+          <DialogDescription className="text-slate-500 font-bold text-base sm:text-xl leading-relaxed italic">
+            Centralize todas as suas missões conectando suas ferramentas favoritas ao seu Centro de Comando.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2 mt-4 space-y-6">
-          <div className="grid grid-cols-1 gap-4">
+        {/* ÁREA DE LISTAGEM: Com scroll customizado */}
+        <div className="flex-1 overflow-y-auto pr-2 sm:pr-6 mt-6 sm:mt-10 space-y-6 sm:space-y-8 custom-scrollbar">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8">
             {integrations.map((integration) => {
               const configured = isConfigured(integration.id);
               const isExpanded = expandedId === integration.id;
@@ -164,161 +234,89 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
                 <div 
                   key={integration.id}
                   className={cn(
-                    "rounded-xl border transition-all overflow-hidden",
-                    configured ? "bg-emerald-50/50 border-emerald-100" : "bg-white border-slate-200 hover:border-slate-300"
+                    "rounded-[1.5rem] sm:rounded-[2.5rem] border-4 border-b-[6px] sm:border-b-[10px] transition-all overflow-hidden",
+                    configured 
+                      ? "bg-duo-green/5 border-duo-green/20 border-b-duo-green/30" 
+                      : "bg-white border-slate-200 border-b-slate-300 hover:border-slate-300"
                   )}
                 >
-                  <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                  {/* Item da Lista */}
+                  <div className="p-4 sm:p-8 flex items-center justify-between gap-4 sm:gap-6">
+                    <div className="flex items-center gap-4 sm:gap-8">
+                      {/* Ícone do Serviço */}
                       <div className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
-                        configured ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500"
+                        "w-12 h-12 sm:w-20 sm:h-20 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-lg sm:shadow-xl border-b-2 sm:border-b-4",
+                        configured ? "bg-duo-green border-green-700 text-white" : "bg-slate-100 border-slate-200 text-slate-300"
                       )}>
-                        <integration.icon className="w-6 h-6" />
+                        <integration.icon className="w-6 h-6 sm:w-10 sm:h-10" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                        <h4 className="text-lg sm:text-2xl font-black text-slate-900 flex items-center gap-2 sm:gap-3 tracking-tight">
                           {integration.name}
-                          {configured && <Check className="w-4 h-4 text-emerald-500" />}
+                          {configured && <Check className="w-4 h-4 sm:w-6 sm:h-6 text-duo-green animate-bounce" />}
                         </h4>
-                        <p className="text-xs text-slate-500">{integration.description}</p>
+                        <p className="text-xs sm:text-base font-bold text-slate-400 italic line-clamp-1 sm:line-clamp-none">{integration.description}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Botão de Ação: Conectar ou Configurar */}
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <Button 
-                        variant={configured ? "ghost" : "outline"} 
+                        variant={configured ? "ghost" : "duo"} 
                         size="sm" 
                         onClick={() => handleConnect(integration.id)}
                         className={cn(
-                          "font-bold text-[10px] uppercase tracking-wider h-8",
-                          configured && "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/50"
+                          "h-10 sm:h-14 px-4 sm:px-8 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-[0.1em] sm:tracking-[0.2em] shadow-md sm:shadow-lg",
+                          configured && "text-duo-green hover:text-green-700 hover:bg-duo-green/10 border-2 border-duo-green/20"
                         )}
                       >
                         {integration.id === 'google-sheets' 
-                          ? (configured ? 'Conectado' : 'Conectar')
-                          : (isExpanded ? <ChevronUp className="w-4 h-4" /> : <Settings2 className="w-4 h-4" />)
+                          ? (configured ? 'OK' : 'Conectar')
+                          : (isExpanded ? <ChevronUp className="w-5 h-5 sm:w-6 h-6" /> : <Settings2 className="w-5 h-5 sm:w-6 h-6" />)
                         }
                       </Button>
                     </div>
                   </div>
 
+                  {/* PAINEL DE CONFIGURAÇÃO: Abre ao clicar no ícone de engrenagem */}
                   {isExpanded && integration.id !== 'google-sheets' && (
-                    <div className="px-4 pb-4 pt-0 border-t border-slate-100 bg-slate-50/50">
-                      <div className="mt-4 space-y-4">
+                    <div className="px-4 sm:px-8 pb-4 sm:pb-8 pt-0 border-t-2 sm:border-t-4 border-slate-100 bg-slate-50/50">
+                      <div className="mt-4 sm:mt-8 space-y-4 sm:space-y-8">
+                        {/* Campos Dinâmicos baseados no serviço */}
                         {integration.id === 'trello' && (
-                          <>
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] uppercase font-bold text-slate-500">API Key</Label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <div className="space-y-2 sm:space-y-3">
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">API Key</Label>
                               <Input 
                                 value={apiKeys.trello.key} 
                                 onChange={(e) => handleKeyChange('trello', 'key', e.target.value)}
-                                placeholder="Insira sua Trello API Key"
-                                className="h-8 text-xs"
+                                placeholder="Key"
+                                className="h-12 sm:h-14 bg-white text-sm"
                               />
                             </div>
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] uppercase font-bold text-slate-500">Token</Label>
+                            <div className="space-y-2 sm:space-y-3">
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">Token</Label>
                               <Input 
                                 value={apiKeys.trello.token} 
                                 onChange={(e) => handleKeyChange('trello', 'token', e.target.value)}
-                                placeholder="Insira seu Trello Token"
+                                placeholder="Token"
                                 type="password"
-                                className="h-8 text-xs"
+                                className="h-12 sm:h-14 bg-white text-sm"
                               />
                             </div>
-                          </>
-                        )}
-                        {integration.id === 'notion' && (
-                          <>
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] uppercase font-bold text-slate-500">Internal Integration Token</Label>
-                              <Input 
-                                value={apiKeys.notion.key} 
-                                onChange={(e) => handleKeyChange('notion', 'key', e.target.value)}
-                                placeholder="secret_..."
-                                type="password"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] uppercase font-bold text-slate-500">Database ID</Label>
-                              <Input 
-                                value={apiKeys.notion.databaseId} 
-                                onChange={(e) => handleKeyChange('notion', 'databaseId', e.target.value)}
-                                placeholder="ID da base de dados"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                          </>
-                        )}
-                        {integration.id === 'asana' && (
-                          <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold text-slate-500">Personal Access Token</Label>
-                            <Input 
-                              value={apiKeys.asana.token} 
-                              onChange={(e) => handleKeyChange('asana', 'token', e.target.value)}
-                              placeholder="Insira seu Asana Token"
-                              type="password"
-                              className="h-8 text-xs"
-                            />
                           </div>
                         )}
-                        {integration.id === 'hubspot' && (
-                          <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold text-slate-500">Private App Access Token</Label>
-                            <Input 
-                              value={apiKeys.hubspot.key} 
-                              onChange={(e) => handleKeyChange('hubspot', 'key', e.target.value)}
-                              placeholder="pat-na1-..."
-                              type="password"
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                        )}
-                        {integration.id === 'slack' && (
-                          <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold text-slate-500">Webhook URL</Label>
-                            <Input 
-                              value={apiKeys.slack.webhook} 
-                              onChange={(e) => handleKeyChange('slack', 'webhook', e.target.value)}
-                              placeholder="https://hooks.slack.com/services/..."
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                        )}
-                        {integration.id === 'google-keep' && (
-                          <>
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] uppercase font-bold text-slate-500">Client ID</Label>
-                              <Input 
-                                value={apiKeys['google-keep'].clientId} 
-                                onChange={(e) => handleKeyChange('google-keep', 'clientId', e.target.value)}
-                                placeholder="Insira seu Google Keep Client ID"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label className="text-[10px] uppercase font-bold text-slate-500">Client Secret</Label>
-                              <Input 
-                                value={apiKeys['google-keep'].clientSecret} 
-                                onChange={(e) => handleKeyChange('google-keep', 'clientSecret', e.target.value)}
-                                placeholder="Insira seu Google Keep Client Secret"
-                                type="password"
-                                className="h-8 text-xs"
-                              />
-                            </div>
-                          </>
-                        )}
+                        
+                        {/* Botão para salvar as chaves digitadas */}
                         <Button 
-                          size="sm" 
-                          className="w-full h-8 text-[10px] font-bold uppercase tracking-wider"
+                          variant="me"
+                          className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-[0_4px_0_0_#1e40af] sm:shadow-[0_6px_0_0_#1e40af] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[6px]"
                           onClick={() => {
                             setExpandedId(null);
                             toast.success(`Configurações de ${integration.name} salvas!`);
                           }}
                         >
-                          Salvar Configurações
+                          Salvar
                         </Button>
                       </div>
                     </div>
@@ -328,44 +326,60 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
             })}
           </div>
 
-          <div className="bg-slate-900 rounded-xl p-6 text-white relative overflow-hidden">
+          {/* BANNER: SINCRONIZAÇÃO (Estilo Dark Mode Gamificado) */}
+          <div className="bg-slate-900 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 text-white relative overflow-hidden border-b-[8px] sm:border-b-[12px] border-slate-950 shadow-2xl">
             <div className="relative z-10">
-              <h4 className="font-bold mb-2 flex items-center gap-2">
-                <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
-                Sincronização Automática
+              <h4 className="text-xl sm:text-2xl font-black mb-3 sm:mb-4 flex items-center gap-3 sm:gap-4 italic uppercase tracking-tighter">
+                <RefreshCw className={cn("w-6 h-6 sm:w-8 sm:h-8 text-me-blue", isSyncing && "animate-spin")} />
+                Sincronização
               </h4>
-              <p className="text-xs text-slate-300 mb-4">
-                Mantenha seus dados sempre atualizados. A sincronização ocorre a cada 15 minutos ou manualmente.
+              <p className="text-sm sm:text-lg font-bold text-slate-400 mb-6 sm:mb-8 leading-relaxed italic">
+                Mantenha seu progresso unificado. Sincronizamos automaticamente a cada 15 minutos.
               </p>
               <Button 
                 variant="secondary" 
-                size="sm" 
+                size="lg" 
                 disabled={isSyncing}
                 onClick={handleSync}
-                className="w-full font-bold uppercase tracking-wider h-9"
+                className="w-full font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] bg-white text-slate-900 hover:bg-slate-100 shadow-xl text-xs sm:text-base"
               >
-                {isSyncing ? "Sincronizando..." : "Sincronizar Agora"}
+                {isSyncing ? "Sincronizando..." : "Sincronizar Agora 🔄"}
               </Button>
             </div>
-            <div className="absolute -right-4 -bottom-4 opacity-10">
-              <RefreshCw className="w-32 h-32" />
+            {/* Efeito Visual de Fundo */}
+            <div className="absolute -right-8 -bottom-8 sm:-right-12 sm:-bottom-12 opacity-5">
+              <RefreshCw className="w-48 h-48 sm:w-64 sm:h-64" />
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-100 rounded-xl">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-800">
-              <p className="font-bold mb-1">Configuração Necessária</p>
-              <p>Para algumas integrações, você precisará configurar as chaves de API nas configurações do sistema.</p>
+          {/* AVISO: Dica de Segurança/Configuração */}
+          <div className="flex items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-duo-yellow/10 border-2 sm:border-4 border-duo-yellow/20 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-inner">
+            <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-duo-yellow-dark shrink-0 mt-1" />
+            <div className="text-duo-yellow-dark">
+              <p className="font-black mb-1 sm:mb-2 text-lg sm:text-xl italic uppercase tracking-tight">Atenção! 🛡️</p>
+              <p className="font-bold text-xs sm:text-base italic leading-relaxed">
+                Seus dados são armazenados localmente e nunca saem do seu dispositivo.
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-3 pt-4 border-t">
-          <Button variant="ghost" onClick={onClose} className="text-xs font-bold uppercase tracking-wider">
-            Cancelar
+        {/* RODAPÉ DO MODAL: Botões de Navegação */}
+        <div className="mt-6 sm:mt-10 flex justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 border-t-2 sm:border-t-4 border-slate-100">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={onClose} 
+            className="rounded-xl sm:rounded-2xl px-8 sm:px-12 h-12 sm:h-16 font-black uppercase tracking-widest text-[10px] sm:text-xs border-2 sm:border-4 border-b-4 sm:border-b-8 border-slate-200 hover:bg-slate-50 transition-all"
+          >
+            Voltar
           </Button>
-          <Button onClick={onClose} className="text-xs font-bold uppercase tracking-wider">
+          <Button 
+            variant="duo" 
+            size="lg" 
+            onClick={onClose} 
+            className="rounded-xl sm:rounded-2xl px-10 sm:px-16 h-12 sm:h-16 font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-[0_4px_0_0_#46a302] sm:shadow-[0_8px_0_0_#46a302] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[8px] transition-all"
+          >
             Concluir
           </Button>
         </div>

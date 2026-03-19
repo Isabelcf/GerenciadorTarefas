@@ -1,26 +1,37 @@
 {
+  /* CONFIGURAÇÕES DO COMPILADOR TYPESCRIPT */
   "compilerOptions": {
+    /* Versão do JavaScript de saída */
     "target": "ES2022",
+    /* Habilita suporte a decoradores (útil em algumas bibliotecas) */
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
+    /* Sistema de módulos utilizado */
     "module": "ESNext",
+    /* Bibliotecas de tipos incluídas (DOM para navegador, ES2022 para JS moderno) */
     "lib": [
       "ES2022",
       "DOM",
       "DOM.Iterable"
     ],
+    /* Pula a verificação de tipos em bibliotecas externas para acelerar o build */
     "skipLibCheck": true,
+    /* Estratégia de resolução de módulos */
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
+    /* Permite importar arquivos JavaScript */
     "allowJs": true,
+    /* Configuração para suporte ao JSX do React */
     "jsx": "react-jsx",
+    /* Atalhos de importação (ex: import { ... } from '@/src/...') */
     "paths": {
       "@/*": [
         "./*"
       ]
     },
     "allowImportingTsExtensions": true,
+    /* Não gera arquivos .js de saída, apenas verifica os tipos */
     "noEmit": true
   }
 }

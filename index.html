@@ -1,12 +1,29 @@
+<!-- 
+  ARQUIVO: INDEX.HTML
+  
+  Este é o arquivo HTML principal que serve como o esqueleto da aplicação.
+  Ele define a estrutura básica da página e carrega o script principal do React.
+-->
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
+    <!-- Define a codificação de caracteres para suportar acentos e caracteres especiais -->
     <meta charset="UTF-8" />
+    
+    <!-- Configura a viewport para garantir que o site seja responsivo em dispositivos móveis -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    
+    <!-- Título da aplicação que aparece na aba do navegador -->
+    <title>TaskFlow - Sua Jornada de Produtividade</title>
   </head>
   <body>
+    <!-- 
+      O elemento 'root' é onde o React irá "montar" toda a interface da aplicação.
+      Tudo o que você vê no app é renderizado dentro desta div.
+    -->
     <div id="root"></div>
+    
+    <!-- Carrega o ponto de entrada do código TypeScript/React -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

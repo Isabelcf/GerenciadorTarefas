@@ -1,5 +1,6 @@
 {
-  "name": "react-example",
+  "name": "taskflow-soft-ui",
+  "description": "Gerenciador de tarefas gamificado com estética Playful Soft UI",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -40,7 +41,7 @@
     "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
+    "motion": "^12.36.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.13.1",

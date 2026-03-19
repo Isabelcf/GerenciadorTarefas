@@ -1,5 +1,5 @@
 {
-  "name": "Gerenciador de Tarefas Pro",
-  "description": "Um gerenciador de tarefas moderno e intuitivo para organizar seu dia a dia, com prioridades, datas e filtros.",
+  "name": "TaskFlow - Jornada de Produtividade",
+  "description": "Uma aplicação de gerenciamento de tarefas gamificada com estética 'Playful Soft UI'. Inclui Dashboard, Calendário, Perfil de Usuário, Timer Pomodoro e integrações externas. Focada em transformar a produtividade em uma experiência divertida e motivadora.",
   "requestFramePermissions": []
 }

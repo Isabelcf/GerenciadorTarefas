@@ -1,10 +1,15 @@
+/* Importação de fontes do Google Fonts: Inter para o corpo e JetBrains Mono para dados técnicos */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Importação principal do Tailwind CSS v4 */
 @import "tailwindcss";
 
+/* Definição do tema customizado usando a nova sintaxe do Tailwind v4 */
 @theme {
+  /* Configuração das fontes padrão do projeto */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
+  /* Mapeamento de cores baseadas em variáveis HSL para suporte a temas (claro/escuro) */
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -32,10 +37,27 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  /* Cores customizadas para a estética Gamificada (Duolingo/Me+) */
+  --color-duo-green: #58cc02; /* Verde vibrante principal */
+  --color-duo-green-dark: #46a302; /* Sombra do verde para efeito 3D */
+  --color-duo-yellow: #ffc800; /* Amarelo vibrante para avisos/pendências */
+  --color-duo-yellow-dark: #e5a500; /* Sombra do amarelo */
+  --color-me-purple: #9333ea; /* Roxo para destaques e progresso */
+  --color-me-purple-dark: #7e22ce; /* Sombra do roxo */
+  --color-me-blue: #1cb0f6; /* Azul para interações secundárias */
+  --color-me-blue-dark: #1899d6; /* Sombra do azul */
+  --color-me-orange: #ff9600; /* Laranja para alertas */
+  --color-me-orange-dark: #e58700; /* Sombra do laranja */
 
+  /* Definição de raios de borda (arredondamento) generosos para o estilo "Soft UI" */
+  --radius-lg: 1.25rem;
+  --radius-md: 1rem;
+  --radius-sm: 0.75rem;
+  --radius-xl: 1.75rem;
+  --radius-2xl: 2.25rem; /* Arredondamento principal dos cards */
+  --radius-3xl: 3rem; /* Arredondamento extra para containers grandes */
+
+  /* Animações padrão para componentes interativos */
   @keyframes accordion-down {
     from { height: 0; }
     to { height: var(--radix-accordion-content-height); }
@@ -49,8 +71,10 @@
   --animate-accordion-up: accordion-up 0.2s ease-out;
 }
 
+/* Camada base para reset de estilos e variáveis CSS globais */
 @layer base {
   :root {
+    /* Definições de cores em HSL para o tema claro */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -79,9 +103,10 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    --radius: 1rem;
   }
 
+  /* Definições de cores para o tema escuro */
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -113,21 +138,26 @@
   }
 }
 
+/* Estilos base aplicados a elementos HTML fundamentais */
 @layer base {
   * {
+    /* Garante que todos os elementos usem a cor de borda definida no tema */
     @apply border-border;
   }
   body {
+    /* Configuração padrão do corpo da página: fundo, cor do texto e fonte sans-serif */
     @apply bg-background text-foreground font-sans;
   }
 }
 
+/* Sobrescrita para garantir o fundo cinza claro e suavização de fonte */
 @layer base {
   body {
     @apply bg-zinc-50 text-zinc-900 font-sans antialiased;
   }
 }
 
+/* Estilização para renderização de Markdown */
 .markdown-body {
   @apply text-sm leading-relaxed;
 }

@@ -1,7 +1,10 @@
 import * as React from "react"
+/* Importa a primitiva do Radix UI para Separator, garantindo acessibilidade */
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
+/* Importa utilitário para mesclar classes CSS */
 import { cn } from "@/src/lib/utils"
 
+/* Componente de Separador Visual */
 const Separator = React.forwardRef<
   React.ElementRef<typeof SeparatorPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
@@ -15,8 +18,9 @@ const Separator = React.forwardRef<
       decorative={decorative}
       orientation={orientation}
       className={cn(
-        "shrink-0 bg-border",
-        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
+        /* Estética Soft UI: Separador ligeiramente mais grosso e arredondado para suavidade */
+        "shrink-0 bg-slate-200 rounded-full",
+        orientation === "horizontal" ? "h-1 w-full" : "h-full w-1",
         className
       )}
       {...props}

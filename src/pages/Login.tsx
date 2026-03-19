@@ -1,61 +1,116 @@
+/**
+ * PÁGINA: LOGIN
+ * 
+ * Esta página permite que usuários existentes acessem suas contas.
+ * Ela apresenta um formulário centralizado com campos para nome de usuário e senha.
+ * 
+ * Destaques visuais (Playful Soft UI):
+ * - Logo centralizado com efeito 3D (borda inferior grossa).
+ * - Card de formulário com cantos arredondados (`rounded-[2.5rem]`) e sombra profunda.
+ * - Botão de ação principal com variante "me" (roxo vibrante) e efeito de clique.
+ * - Inputs com ícones internos para melhor usabilidade.
+ */
+
 import React, { useState } from 'react';
+/* Importação de hooks do React Router para navegação entre rotas */
 import { useNavigate, Link } from 'react-router-dom';
+/* Importação de ícones da biblioteca Lucide-React */
 import { CheckSquare, User, Lock, ArrowRight } from 'lucide-react';
+/* Importação de componentes de UI baseados no design system do projeto */
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
+/* Importação do sistema de notificações Toast */
 import { toast } from 'sonner';
+/* Importação do Axios para chamadas de API */
 import axios from 'axios';
 
+/**
+ * COMPONENTE LOGIN
+ * Gerencia a autenticação do usuário.
+ */
 export default function Login() {
+  /* Hook para redirecionar o usuário após o login */
   const navigate = useNavigate();
+  
+  /* ESTADO: Armazena o nome de usuário digitado */
   const [username, setUsername] = useState('');
+  
+  /* ESTADO: Armazena a senha digitada */
   const [password, setPassword] = useState('');
+  
+  /* ESTADO: Controla o estado visual de carregamento do botão */
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * FUNÇÃO: handleLogin
+   * Disparada ao enviar o formulário. Realiza a autenticação no servidor.
+   */
   const handleLogin = async (e: React.FormEvent) => {
+    /* Previne o comportamento padrão de recarregar a página */
     e.preventDefault();
+    /* Inicia o estado de carregamento */
     setIsLoading(true);
     
     try {
+      /* Envia as credenciais para o endpoint de login */
       const response = await axios.post('/api/auth/login', { username, password });
       const { token, user } = response.data;
       
+      /* Salva o token JWT no LocalStorage para manter o usuário logado */
       localStorage.setItem('token', token);
+      /* Salva o nome do usuário para exibir saudações personalizadas */
       localStorage.setItem('userName', user.username);
       
-      toast.success(`Bem-vindo de volta, ${user.username}!`);
+      /* Notifica o usuário sobre o sucesso */
+      toast.success(`Bem-vindo de volta, ${user.username}! 🚀`);
+      /* Redireciona para a página principal (Dashboard) */
       navigate('/');
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Credenciais inválidas';
+      /* Captura erros da API ou de rede */
+      const message = error.response?.data?.error || 'Credenciais inválidas. Tente novamente!';
+      /* Exibe o erro em um toast vermelho */
       toast.error(message);
     } finally {
+      /* Finaliza o estado de carregamento, independente do resultado */
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
+    /* CONTAINER PRINCIPAL: Ocupa toda a tela, centraliza o conteúdo e define o fundo */
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-md space-y-12">
+        
+        {/* CABEÇALHO: Logo animado e Título do App */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-            <CheckSquare className="text-white w-6 h-6" />
+          {/* Box do Logo com efeito 3D (estilo Duolingo) */}
+          <div className="w-24 h-24 bg-me-purple rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl border-b-8 border-purple-800 transition-transform hover:scale-105">
+            <CheckSquare className="text-white w-12 h-12" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Acesso Privado</h1>
-          <p className="text-slate-500 mt-2">Entre com seu username anônimo</p>
+          <h1 className="text-5xl font-black tracking-tighter text-slate-900 uppercase italic">
+            TaskFlow
+          </h1>
+          <p className="text-slate-500 mt-4 font-bold text-xl">Pronto para sua próxima missão? 🎯</p>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        {/* CARD DO FORMULÁRIO: Estética Soft UI com bordas grossas e sombras */}
+        <div className="bg-white p-10 sm:p-12 rounded-[3rem] border-4 border-slate-200 border-b-[12px] shadow-2xl space-y-10">
+          <form onSubmit={handleLogin} className="space-y-8">
+            
+            {/* CAMPO: NOME DE USUÁRIO */}
+            <div className="space-y-3">
+              <Label htmlFor="username" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
+                Seu Nome de Herói
+              </Label>
+              <div className="relative group">
+                {/* Ícone posicionado dentro do input */}
+                <User className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-me-purple transition-colors" />
                 <Input 
                   id="username"
                   type="text" 
-                  placeholder="Seu username" 
-                  className="pl-10"
+                  placeholder="ex: super_dev" 
+                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -63,17 +118,18 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            {/* CAMPO: SENHA */}
+            <div className="space-y-3">
+              <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
+                Senha Secreta
+              </Label>
+              <div className="relative group">
+                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-me-purple transition-colors" />
                 <Input 
                   id="password"
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-10"
+                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -81,19 +137,31 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11" disabled={isLoading}>
-              {isLoading ? 'Autenticando...' : 'Entrar'}
-              {!isLoading && <ArrowRight className="ml-2 w-4 h-4" />}
+            {/* BOTÃO DE SUBMISSÃO: Grande, roxo e com efeito de profundidade */}
+            <Button 
+              variant="me" 
+              type="submit" 
+              className="w-full h-20 rounded-[1.5rem] text-2xl font-black uppercase tracking-widest shadow-[0_8px_0_0_#7e22ce] active:shadow-none active:translate-y-[4px] transition-all" 
+              disabled={isLoading}
+            >
+              {isLoading ? 'Autenticando...' : 'Entrar na Jornada'}
+              {!isLoading && <ArrowRight className="ml-4 w-8 h-8" />}
             </Button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-slate-500">
-          Não tem uma conta?{' '}
-          <Link to="/signup" className="font-semibold text-slate-900 hover:underline">
-            Criar conta anônima
+        {/* RODAPÉ: Link para cadastro se o usuário não tiver conta */}
+        <div className="text-center space-y-4">
+          <p className="text-xl font-bold text-slate-500">
+            Novo por aqui?
+          </p>
+          <Link 
+            to="/signup" 
+            className="inline-block text-me-purple hover:text-purple-700 font-black text-2xl underline underline-offset-8 decoration-4 transition-all hover:scale-105"
+          >
+            Crie sua conta agora!
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );
