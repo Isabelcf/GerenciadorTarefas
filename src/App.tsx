@@ -22,6 +22,7 @@ import Login from '@/src/pages/Login';
 import Signup from '@/src/pages/Signup';
 import Profile from '@/src/pages/Profile';
 import Calendar from '@/src/pages/Calendar';
+import ForgotPassword from '@/src/pages/ForgotPassword';
 
 /**
  * COMPONENTE: ProtectedRoute
@@ -58,6 +59,7 @@ export default function App() {
         {/* Rotas Públicas: Login e Cadastro */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         
         {/* Rotas Protegidas: Perfil e Calendário */}
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

@@ -190,6 +190,84 @@ async function startServer() {
   });
 
   /**
+   * ROTA: POST /api/auth/forgot-password
+   * Verifica se o usuário existe por username ou e-mail.
+   */
+  app.post('/api/auth/forgot-password', (req, res) => {
+    const { identifier } = req.body;
+
+    if (!identifier) {
+      return res.status(400).json({ error: 'Identificador é obrigatório' });
+    }
+
+    try {
+      /* Busca o usuário por username OU e-mail */
+      const user: any = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?').get(identifier, identifier);
+
+      if (!user) {
+        /* Retorna 404 se não encontrar, para que o front exiba a mensagem de "não cadastrado" */
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      /* Simulação de envio de e-mail */
+      console.log(`[RECOVERY] Enviando e-mail para: ${user.email || user.username}`);
+      
+      res.json({ message: 'Instruções de recuperação enviadas' });
+    } catch (error) {
+      res.status(500).json({ error: 'Erro no servidor' });
+    }
+  });
+
+  /**
+   * ROTA: POST /api/integrations/sync
+   * Mock de sincronização com plataformas externas (Trello, Jira, etc).
+   */
+  app.post('/api/integrations/sync', (req, res) => {
+    /* Simulação de tarefas vindas de fora com comentários */
+    const mockIntegratedTasks = [
+      {
+        id: 'external-task-1',
+        title: 'Revisar Protótipo (Trello)',
+        description: 'Tarefa importada do board de Design no Trello.',
+        category: 'trabalho',
+        priority: 'high',
+        completed: false,
+        inProgress: true,
+        createdAt: Date.now() - 86400000,
+        source: 'trello',
+        comments: [
+          {
+            id: 'ext-comment-1',
+            text: 'O cliente pediu para mudar a cor do botão para azul.',
+            createdAt: Date.now() - 3600000,
+            author: 'João (Trello)'
+          }
+        ]
+      },
+      {
+        id: 'external-task-2',
+        title: 'Bug no Login (Jira)',
+        description: 'Erro reportado no ambiente de produção.',
+        category: 'trabalho',
+        priority: 'high',
+        completed: false,
+        createdAt: Date.now() - 172800000,
+        source: 'jira',
+        comments: [
+          {
+            id: 'ext-comment-2',
+            text: 'Já identifiquei o problema no log do servidor.',
+            createdAt: Date.now() - 7200000,
+            author: 'Admin (Jira)'
+          }
+        ]
+      }
+    ];
+
+    res.json({ tasks: mockIntegratedTasks });
+  });
+
+  /**
    * INTEGRAÇÃO COM VITE
    * Em desenvolvimento, o Express usa o middleware do Vite para servir o Frontend.
    * Em produção, ele serve os arquivos estáticos da pasta 'dist'.

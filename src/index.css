@@ -37,17 +37,17 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  /* Cores customizadas para a estética Gamificada (Duolingo/Me+) */
-  --color-duo-green: #58cc02; /* Verde vibrante principal */
-  --color-duo-green-dark: #46a302; /* Sombra do verde para efeito 3D */
-  --color-duo-yellow: #ffc800; /* Amarelo vibrante para avisos/pendências */
-  --color-duo-yellow-dark: #e5a500; /* Sombra do amarelo */
-  --color-me-purple: #9333ea; /* Roxo para destaques e progresso */
-  --color-me-purple-dark: #7e22ce; /* Sombra do roxo */
-  --color-me-blue: #1cb0f6; /* Azul para interações secundárias */
-  --color-me-blue-dark: #1899d6; /* Sombra do azul */
-  --color-me-orange: #ff9600; /* Laranja para alertas */
-  --color-me-orange-dark: #e58700; /* Sombra do laranja */
+  /* Cores customizadas para a estética Gamificada (Tons Pastéis) */
+  --color-duo-green: #86efac; /* Verde pastel */
+  --color-duo-green-dark: #4ade80; /* Sombra do verde pastel */
+  --color-duo-yellow: #fde047; /* Amarelo pastel */
+  --color-duo-yellow-dark: #facc15; /* Sombra do amarelo pastel */
+  --color-me-purple: #d8b4fe; /* Roxo pastel */
+  --color-me-purple-dark: #c084fc; /* Sombra do roxo pastel */
+  --color-me-blue: #7dd3fc; /* Azul pastel */
+  --color-me-blue-dark: #38bdf8; /* Sombra do azul pastel */
+  --color-me-orange: #fdba74; /* Laranja pastel */
+  --color-me-orange-dark: #fb923c; /* Sombra do laranja pastel */
 
   /* Definição de raios de borda (arredondamento) generosos para o estilo "Soft UI" */
   --radius-lg: 1.25rem;
@@ -160,4 +160,24 @@
 /* Estilização para renderização de Markdown */
 .markdown-body {
   @apply text-sm leading-relaxed;
+}
+
+/* Estilização customizada para barras de rolagem (Soft UI) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0; /* slate-200 */
+  border-radius: 20px;
+  border: 3px solid white; /* Cria um efeito de espaçamento interno */
+  background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1; /* slate-300 */
 }

@@ -109,11 +109,11 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
 
   return (
     /* Formulário com espaçamento vertical entre os campos */
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-8 p-0.5">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-8 p-0.5 overflow-x-hidden">
       
       {/* CAMPO: TÍTULO DA MISSÃO */}
       <div className="space-y-1.5 sm:space-y-3">
-        <Label htmlFor="title" className="text-[10px] sm:text-sm font-black uppercase tracking-[0.2em] text-slate-500 ml-2">
+        <Label htmlFor="title" className="text-[10px] sm:text-sm font-black uppercase tracking-widest sm:tracking-[0.2em] text-slate-500 ml-2">
           Título da Missão <span className="text-red-500">*</span>
         </Label>
         <Input
@@ -121,13 +121,13 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
           value={formData.title}
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           placeholder="Ex: Dominar o mundo"
-          className="bg-white h-12 sm:h-14 text-base sm:text-lg rounded-xl sm:rounded-2xl"
+          className="bg-white h-12 sm:h-14 text-base sm:text-lg rounded-xl sm:rounded-2xl px-3 sm:px-5"
         />
       </div>
 
       {/* CAMPO: DESCRIÇÃO (TEXTAREA) */}
       <div className="space-y-1.5 sm:space-y-3">
-        <Label htmlFor="description" className="text-[10px] sm:text-sm font-black uppercase tracking-[0.2em] text-slate-500 ml-2">
+        <Label htmlFor="description" className="text-[10px] sm:text-sm font-black uppercase tracking-widest sm:tracking-[0.2em] text-slate-500 ml-2">
           Detalhes da Missão
         </Label>
         <textarea
@@ -137,7 +137,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
           placeholder="O que exatamente você precisa fazer?"
           className={cn(
             /* Estilização manual para o textarea seguir o padrão Soft UI */
-            "flex min-h-[80px] sm:min-h-[120px] w-full rounded-xl sm:rounded-2xl bg-white px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-base font-bold",
+            "flex min-h-[80px] sm:min-h-[120px] w-full rounded-xl sm:rounded-2xl bg-white px-3 sm:px-5 py-3 sm:py-4 text-base sm:text-base font-bold",
             "border-2 border-slate-200 border-b-4 focus-visible:border-me-blue",
             "placeholder:text-slate-400 placeholder:font-medium focus:outline-none transition-all resize-none shadow-inner"
           )}
@@ -149,12 +149,12 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
         
         {/* SELETOR: CATEGORIA */}
         <div className="space-y-2 sm:space-y-3">
-          <Label htmlFor="category" className="text-[10px] sm:text-sm font-black uppercase tracking-[0.2em] text-slate-500 ml-2">Categoria</Label>
+          <Label htmlFor="category" className="text-[10px] sm:text-sm font-black uppercase tracking-widest sm:tracking-[0.2em] text-slate-500 ml-2">Categoria</Label>
           <Select
             value={formData.category}
             onValueChange={(value: Category) => setFormData(prev => ({ ...prev, category: value }))}
           >
-            <SelectTrigger className="h-12 sm:h-14 rounded-2xl border-2 border-slate-200 border-b-4 bg-white font-bold px-4 sm:px-5 shadow-sm text-sm sm:text-base">
+            <SelectTrigger className="h-12 sm:h-14 rounded-2xl border-2 border-slate-200 border-b-4 bg-white font-bold px-3 sm:px-5 shadow-sm text-sm sm:text-base">
               <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
             <SelectContent className="rounded-2xl border-2 border-slate-200 shadow-2xl">
@@ -169,12 +169,12 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
 
         {/* SELETOR: PRIORIDADE */}
         <div className="space-y-2 sm:space-y-3">
-          <Label htmlFor="priority" className="text-[10px] sm:text-sm font-black uppercase tracking-[0.2em] text-slate-500 ml-2">Prioridade</Label>
+          <Label htmlFor="priority" className="text-[10px] sm:text-sm font-black uppercase tracking-widest sm:tracking-[0.2em] text-slate-500 ml-2">Prioridade</Label>
           <Select
             value={formData.priority}
             onValueChange={(value: Priority) => setFormData(prev => ({ ...prev, priority: value }))}
           >
-            <SelectTrigger className="h-12 sm:h-14 rounded-2xl border-2 border-slate-200 border-b-4 bg-white font-bold px-4 sm:px-5 shadow-sm text-sm sm:text-base">
+            <SelectTrigger className="h-12 sm:h-14 rounded-2xl border-2 border-slate-200 border-b-4 bg-white font-bold px-3 sm:px-5 shadow-sm text-sm sm:text-base">
               <SelectValue placeholder="Qual a urgência?" />
             </SelectTrigger>
             <SelectContent className="rounded-2xl border-2 border-slate-200 shadow-2xl">
@@ -189,7 +189,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
       </div>
 
       {/* CAMPO: INICIAR IMEDIATAMENTE (CHECKBOX ESTILIZADO) */}
-      <div className="flex items-center gap-3 sm:gap-5 p-3 sm:p-6 bg-slate-50 rounded-xl sm:rounded-[2rem] border-2 border-slate-200 border-b-4 transition-all hover:bg-slate-100">
+      <div className="flex items-center gap-2.5 sm:gap-5 p-2.5 sm:p-6 bg-slate-50 rounded-xl sm:rounded-[2rem] border-2 border-slate-200 border-b-4 transition-all hover:bg-slate-100">
         <div className="relative flex items-center shrink-0">
           <input
             type="checkbox"
@@ -204,11 +204,11 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
             )}
           />
         </div>
-        <div className="flex flex-col">
-          <Label htmlFor="inProgress" className="text-sm sm:text-lg font-black text-slate-800 cursor-pointer select-none leading-none">
+        <div className="flex flex-col min-w-0">
+          <Label htmlFor="inProgress" className="text-sm sm:text-lg font-black text-slate-800 cursor-pointer select-none leading-none truncate">
             Iniciar Imediatamente
           </Label>
-          <span className="text-[8px] sm:text-xs font-bold text-slate-400 mt-0.5 sm:mt-1">A missão já começará em seu radar de foco.</span>
+          <span className="text-[8px] sm:text-xs font-bold text-slate-400 mt-0.5 sm:mt-1 leading-tight">A missão já começará em seu radar de foco.</span>
         </div>
       </div>
 

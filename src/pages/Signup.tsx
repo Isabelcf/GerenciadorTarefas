@@ -86,13 +86,13 @@ export default function Signup() {
 
   return (
     /* CONTAINER PRINCIPAL: Centraliza o formulário e define o fundo suave */
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 py-16 font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-6 py-12 sm:py-16 font-sans">
       <div className="w-full max-w-md space-y-12">
         
         {/* CABEÇALHO: Ícone de escudo e Título de Boas-vindas */}
         <div className="flex flex-col items-center text-center">
           {/* Box do Ícone com efeito 3D verde (estilo Duolingo) */}
-          <div className="w-24 h-24 bg-duo-green rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl border-b-8 border-green-700 transition-transform hover:rotate-3">
+          <div className="w-24 h-24 bg-duo-green rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl border-b-8 border-duo-green-dark transition-transform hover:rotate-3">
             <ShieldCheck className="text-white w-12 h-12" />
           </div>
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 uppercase italic">
@@ -107,16 +107,16 @@ export default function Signup() {
             
             {/* CAMPO: NOME REAL */}
             <div className="space-y-3">
-              <Label htmlFor="fullName" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
+              <Label htmlFor="fullName" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
                 Seu Nome Completo
               </Label>
               <div className="relative group">
-                <User className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-duo-green transition-colors" />
+                <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-duo-green transition-colors" />
                 <Input 
                   id="fullName"
                   type="text" 
                   placeholder="ex: João Silva" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -126,16 +126,16 @@ export default function Signup() {
 
             {/* CAMPO: CODINOME (USERNAME) */}
             <div className="space-y-3">
-              <Label htmlFor="username" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
-                Codinome (Username)
+              <Label htmlFor="username" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
+                User
               </Label>
               <div className="relative group">
-                <User className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-duo-green transition-colors" />
+                <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-duo-green transition-colors" />
                 <Input 
                   id="username"
                   type="text" 
                   placeholder="ex: mestre_das_tarefas" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -145,16 +145,16 @@ export default function Signup() {
 
             {/* CAMPO: E-MAIL */}
             <div className="space-y-3">
-              <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
+              <Label htmlFor="email" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
                 E-mail de Contato
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-duo-green transition-colors" />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-duo-green transition-colors" />
                 <Input 
                   id="email"
                   type="email" 
                   placeholder="seu@email.com" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -164,15 +164,15 @@ export default function Signup() {
 
             {/* CAMPO: DATA DE NASCIMENTO */}
             <div className="space-y-3">
-              <Label htmlFor="birthDate" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
+              <Label htmlFor="birthDate" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
                 Data de Nascimento
               </Label>
               <div className="relative group">
-                <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-duo-green transition-colors" />
+                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-duo-green transition-colors" />
                 <Input 
                   id="birthDate"
                   type="date" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                   required
@@ -182,16 +182,16 @@ export default function Signup() {
 
             {/* CAMPO: SENHA */}
             <div className="space-y-3">
-              <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
-                Senha de Acesso
+              <Label htmlFor="password" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
+                Senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-duo-green transition-colors" />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-duo-green transition-colors" />
                 <Input 
                   id="password"
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -201,16 +201,16 @@ export default function Signup() {
 
             {/* CAMPO: CONFIRMAR SENHA */}
             <div className="space-y-3">
-              <Label htmlFor="confirmPassword" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
+              <Label htmlFor="confirmPassword" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
                 Confirmar Senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-duo-green transition-colors" />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-duo-green transition-colors" />
                 <Input 
                   id="confirmPassword"
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-duo-green focus:ring-duo-green/20 transition-all"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -222,23 +222,23 @@ export default function Signup() {
             <Button 
               variant="duo" 
               type="submit" 
-              className="w-full h-20 rounded-[1.5rem] text-2xl font-black uppercase tracking-widest shadow-[0_8px_0_0_#46a302] active:shadow-none active:translate-y-[4px] transition-all" 
+              className="w-full h-16 sm:h-20 rounded-[1.25rem] sm:rounded-[1.5rem] text-base sm:text-2xl font-black uppercase tracking-normal sm:tracking-widest shadow-[0_5px_0_0_#4ade80] sm:shadow-[0_8px_0_0_#4ade80] active:shadow-none active:translate-y-[3px] sm:active:translate-y-[4px] transition-all" 
               disabled={isLoading}
             >
-              {isLoading ? 'Criando Conta...' : 'Começar Agora!'}
-              {!isLoading && <ArrowRight className="ml-4 w-8 h-8" />}
+              {isLoading ? 'Criando Conta...' : 'Entrar'}
+              {!isLoading && <ArrowRight className="ml-2 sm:ml-4 w-6 h-6 sm:w-8 sm:h-8" />}
             </Button>
           </form>
         </div>
 
         {/* RODAPÉ: Link para voltar ao login se já tiver conta */}
         <div className="text-center space-y-4">
-          <p className="text-xl font-bold text-slate-500">
+          <p className="text-lg sm:text-xl font-bold text-slate-500">
             Já faz parte da equipe?
           </p>
           <Link 
             to="/login" 
-            className="inline-block text-duo-green hover:text-green-700 font-black text-2xl underline underline-offset-8 decoration-4 transition-all hover:scale-105"
+            className="inline-block text-duo-green hover:text-green-700 font-black text-lg sm:text-xl underline underline-offset-8 decoration-4 transition-all hover:scale-105"
           >
             Fazer login agora!
           </Link>

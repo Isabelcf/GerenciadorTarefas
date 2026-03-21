@@ -112,10 +112,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
         "border-4",
         /* Estilização condicional de bordas e sombras baseada no status */
         task.completed 
-          ? "border-duo-green-dark shadow-[0_6px_0_0_#46a302] md:shadow-[0_10px_0_0_#46a302]" 
+          ? "border-duo-green-dark shadow-[0_6px_0_0_#4ade80] md:shadow-[0_10px_0_0_#4ade80]" 
           : task.inProgress 
-            ? "border-me-purple shadow-[0_6px_0_0_#7e22ce] md:shadow-[0_10px_0_0_#7e22ce]" 
-            : "border-duo-yellow-dark shadow-[0_6px_0_0_#e5a500] md:shadow-[0_10px_0_0_#e5a500]"
+            ? "border-me-purple shadow-[0_6px_0_0_#c084fc] md:shadow-[0_10px_0_0_#c084fc]" 
+            : "border-duo-yellow-dark shadow-[0_6px_0_0_#facc15] md:shadow-[0_10px_0_0_#facc15]"
       )}
     >
       <div className="flex items-start gap-4 md:gap-6">
@@ -158,20 +158,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
           </p>
 
           {/* RODAPÉ DO CARD: Categoria e Ações Rápidas */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Tag de Categoria */}
             <div className={cn(
               "flex items-center gap-2 text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em]",
               task.completed || !task.inProgress ? "text-white/70" : "text-slate-400"
             )}>
-              <div className="flex items-center gap-1.5 bg-black/5 px-2.5 py-1 rounded-full">
-                <Tag className="w-3 h-3 md:w-4 md:h-4" />
-                <span className="truncate max-w-[60px] sm:max-w-none">{categoryLabels[task.category]}</span>
+              <div className="flex items-center gap-1.5 bg-black/5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full">
+                <Tag className="w-2.5 h-2.5 md:w-4 md:h-4" />
+                <span className="truncate max-w-[50px] xs:max-w-none">{categoryLabels[task.category]}</span>
               </div>
             </div>
 
             {/* Ações: Botão Começar e Botão Deletar */}
-            <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-1.5 md:gap-3 ml-auto">
               {/* Botão "Começar" só aparece se a tarefa estiver pendente */}
               {!task.completed && !task.inProgress && onJoin && (
                 <Button 
@@ -213,13 +213,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
       <div className="absolute -top-3 md:-top-4 right-4 md:right-6 flex gap-2 md:gap-3">
         {/* Badge "Em Foco" para tarefas ativas */}
         {task.inProgress && !task.completed && (
-          <span className="px-3 py-1.5 md:px-4 md:py-2 bg-me-purple text-white text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl border-b-2 md:border-b-4 border-purple-900">
+          <span className="px-3 py-1.5 md:px-4 md:py-2 bg-me-purple text-white text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl border-b-2 md:border-b-4 border-me-purple-dark">
             Foco ⚡
           </span>
         )}
         {/* Badge do Timer Pomodoro: Mostra o tempo restante se estiver rodando */}
         {task.timerIsRunning && (
-          <span className="px-3 py-1.5 md:px-4 md:py-2 bg-red-500 text-white text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl border-b-2 md:border-b-4 border-red-800 animate-pulse flex items-center gap-1.5 md:gap-2">
+          <span className="px-3 py-1.5 md:px-4 md:py-2 bg-red-500 text-white text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl border-b-2 md:border-b-4 border-red-600 animate-pulse flex items-center gap-1.5 md:gap-2">
             <Timer className="w-3 h-3 md:w-4 md:h-4" />
             {Math.floor((task.timerSeconds ?? 1500) / 60)}:{(task.timerSeconds ?? 1500) % 60 < 10 ? '0' : ''}{(task.timerSeconds ?? 1500) % 60}
           </span>

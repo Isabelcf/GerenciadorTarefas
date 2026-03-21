@@ -79,13 +79,13 @@ export default function Login() {
 
   return (
     /* CONTAINER PRINCIPAL: Ocupa toda a tela, centraliza o conteúdo e define o fundo */
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-6 py-12 sm:py-6 font-sans">
       <div className="w-full max-w-md space-y-12">
         
         {/* CABEÇALHO: Logo animado e Título do App */}
         <div className="flex flex-col items-center text-center">
           {/* Box do Logo com efeito 3D (estilo Duolingo) */}
-          <div className="w-24 h-24 bg-me-purple rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl border-b-8 border-purple-800 transition-transform hover:scale-105">
+          <div className="w-24 h-24 bg-me-purple rounded-[2.5rem] flex items-center justify-center mb-8 shadow-2xl border-b-8 border-me-purple-dark transition-transform hover:scale-105">
             <CheckSquare className="text-white w-12 h-12" />
           </div>
           <h1 className="text-5xl font-black tracking-tighter text-slate-900 uppercase italic">
@@ -100,17 +100,17 @@ export default function Login() {
             
             {/* CAMPO: NOME DE USUÁRIO */}
             <div className="space-y-3">
-              <Label htmlFor="username" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
-                Seu Nome de Herói
+              <Label htmlFor="username" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
+                User
               </Label>
               <div className="relative group">
                 {/* Ícone posicionado dentro do input */}
-                <User className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-me-purple transition-colors" />
+                <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-me-purple transition-colors" />
                 <Input 
                   id="username"
                   type="text" 
                   placeholder="ex: super_dev" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -120,20 +120,28 @@ export default function Login() {
 
             {/* CAMPO: SENHA */}
             <div className="space-y-3">
-              <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">
-                Senha Secreta
+              <Label htmlFor="password" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
+                Senha
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300 group-focus-within:text-me-purple transition-colors" />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-me-purple transition-colors" />
                 <Input 
                   id="password"
                   type="password" 
                   placeholder="••••••••" 
-                  className="pl-16 h-16 text-xl rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
+                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+              </div>
+              <div className="flex justify-end px-2">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 hover:text-me-purple transition-colors"
+                >
+                  Esqueceu sua senha?
+                </Link>
               </div>
             </div>
 
@@ -141,23 +149,23 @@ export default function Login() {
             <Button 
               variant="me" 
               type="submit" 
-              className="w-full h-20 rounded-[1.5rem] text-2xl font-black uppercase tracking-widest shadow-[0_8px_0_0_#7e22ce] active:shadow-none active:translate-y-[4px] transition-all" 
+              className="w-full h-16 sm:h-20 rounded-[1.25rem] sm:rounded-[1.5rem] text-base sm:text-2xl font-black uppercase tracking-normal sm:tracking-widest shadow-[0_5px_0_0_#c084fc] sm:shadow-[0_8px_0_0_#c084fc] active:shadow-none active:translate-y-[3px] sm:active:translate-y-[4px] transition-all" 
               disabled={isLoading}
             >
-              {isLoading ? 'Autenticando...' : 'Entrar na Jornada'}
-              {!isLoading && <ArrowRight className="ml-4 w-8 h-8" />}
+              {isLoading ? 'Autenticando...' : 'Entrar'}
+              {!isLoading && <ArrowRight className="ml-2 sm:ml-4 w-6 h-6 sm:w-8 sm:h-8" />}
             </Button>
           </form>
         </div>
 
         {/* RODAPÉ: Link para cadastro se o usuário não tiver conta */}
         <div className="text-center space-y-4">
-          <p className="text-xl font-bold text-slate-500">
+          <p className="text-lg sm:text-xl font-bold text-slate-500">
             Novo por aqui?
           </p>
           <Link 
             to="/signup" 
-            className="inline-block text-me-purple hover:text-purple-700 font-black text-2xl underline underline-offset-8 decoration-4 transition-all hover:scale-105"
+            className="inline-block text-me-purple hover:text-purple-700 font-black text-lg sm:text-xl underline underline-offset-8 decoration-4 transition-all hover:scale-105"
           >
             Crie sua conta agora!
           </Link>

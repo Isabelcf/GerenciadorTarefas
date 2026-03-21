@@ -1,0 +1,136 @@
+/**
+ * PÁGINA: ESQUECI MINHA SENHA
+ * 
+ * Permite que o usuário solicite a recuperação de senha via e-mail ou username.
+ * Segue a estética 'Playful Soft UI' do projeto.
+ */
+
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { CheckSquare, Mail, User, ArrowLeft, Send, AlertCircle } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import { Input } from '@/src/components/ui/input';
+import { Label } from '@/src/components/ui/label';
+import { toast } from 'sonner';
+import axios from 'axios';
+
+export default function ForgotPassword() {
+  const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorType, setErrorType] = useState<'none' | 'not_found'>('none');
+
+  const handleRecover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorType('none');
+    
+    try {
+      const response = await axios.post('/api/auth/forgot-password', { identifier });
+      toast.success(`Instruções enviadas para o e-mail associado a "${identifier}"! 📧`);
+      // Em um app real, aqui o usuário esperaria o e-mail. 
+      // Para o demo, vamos apenas avisar e talvez redirecionar após um tempo.
+      setTimeout(() => navigate('/login'), 3000);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setErrorType('not_found');
+      } else {
+        toast.error('Ocorreu um erro. Tente novamente mais tarde.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start sm:justify-center p-6 py-12 sm:py-6 font-sans">
+      <div className="w-full max-w-md space-y-12">
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-me-purple rounded-[2rem] flex items-center justify-center mb-6 shadow-xl border-b-8 border-me-purple-dark transition-transform hover:scale-105">
+            <CheckSquare className="text-white w-10 h-10" />
+          </div>
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic">
+            Recuperar Senha
+          </h1>
+          <p className="text-slate-500 mt-4 font-bold text-lg">Não se preocupe, acontece com os melhores! 🦸‍♂️</p>
+        </div>
+
+        <div className="bg-white p-8 sm:p-10 rounded-[3rem] border-4 border-slate-200 border-b-[12px] shadow-2xl space-y-8">
+          {errorType === 'not_found' ? (
+            <div className="space-y-6 text-center animate-in fade-in zoom-in-95 duration-300">
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto border-4 border-red-100">
+                <AlertCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-black text-slate-900">
+                  Não encontramos seu cadastro.
+                </p>
+                <p className="text-slate-500 font-bold">
+                  Por favor,{' '}
+                  <Link 
+                    to="/signup" 
+                    className="text-me-purple hover:underline decoration-2"
+                  >
+                    crie sua conta
+                  </Link>
+                  {' '}para começar sua jornada!
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => setErrorType('none')}
+                className="w-full h-12 rounded-xl border-2 font-bold"
+              >
+                Tentar outro usuário/e-mail
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleRecover} className="space-y-8">
+              <div className="space-y-3">
+                <Label htmlFor="identifier" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-slate-400 ml-4">
+                  E-mail ou Usuário
+                </Label>
+                <div className="relative group">
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-me-purple transition-colors" />
+                  <Input 
+                    id="identifier"
+                    type="text" 
+                    placeholder="seu@email.com ou username" 
+                    className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-slate-200 focus:border-me-purple focus:ring-me-purple/20 transition-all"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    required
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 ml-4 italic">
+                  Enviaremos as instruções de recuperação para o e-mail cadastrado.
+                </p>
+              </div>
+
+              <Button 
+                variant="me" 
+                type="submit" 
+                className="w-full h-16 rounded-[1.25rem] text-lg font-black uppercase tracking-widest shadow-[0_5px_0_0_#c084fc] active:shadow-none active:translate-y-[3px] transition-all" 
+                disabled={isLoading}
+              >
+                {isLoading ? 'Verificando...' : 'Enviar Recuperação'}
+                {!isLoading && <Send className="ml-3 w-5 h-5" />}
+              </Button>
+            </form>
+          )}
+        </div>
+
+        <div className="text-center">
+          <Link 
+            to="/login" 
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 font-black text-sm uppercase tracking-widest transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para o Login
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

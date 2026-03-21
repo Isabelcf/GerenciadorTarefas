@@ -25,6 +25,29 @@ export interface ChecklistItem {
 }
 
 /**
+ * INTERFACE: Comment
+ * Representa um comentário ou nota dentro de uma tarefa.
+ */
+export interface Comment {
+  id: string;
+  text: string;
+  createdAt: number;
+  author: string;
+  attachments?: { name: string; url: string; type: string }[];
+}
+
+/**
+ * INTERFACE: HistoryEntry
+ * Representa um registro de atividade ou movimentação de uma tarefa.
+ */
+export interface HistoryEntry {
+  id: string;
+  action: string;
+  timestamp: number;
+  details?: string;
+}
+
+/**
  * INTERFACE: Task
  * A estrutura completa de uma tarefa no sistema.
  */
@@ -39,11 +62,14 @@ export interface Task {
   createdAt: number;
   checklist?: ChecklistItem[];
   /* Origem da tarefa (integrações externas) */
-  source?: 'local' | 'google-sheets' | 'trello' | 'notion' | 'asana' | 'monday' | 'clickup' | 'hubspot' | 'salesforce' | 'pipedrive' | 'slack' | 'google-keep';
+  source?: 'local' | 'google-sheets' | 'trello' | 'notion' | 'asana' | 'monday' | 'clickup' | 'hubspot' | 'salesforce' | 'pipedrive' | 'slack' | 'google-keep' | 'jira' | 'zendesk';
   /* Dados do Timer Pomodoro */
   timerSeconds?: number;
   timerIsRunning?: boolean;
   totalTimeSpent?: number;
+  /* Comentários e Histórico */
+  comments?: Comment[];
+  history?: HistoryEntry[];
 }
 
 /**
@@ -56,4 +82,18 @@ export interface TaskFormData {
   category: Category;
   priority: Priority;
   inProgress?: boolean;
+}
+
+/**
+ * INTERFACE: Notification
+ * Representa uma notificação no sistema.
+ */
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'holiday' | 'integration' | 'interaction' | 'system';
+  createdAt: number;
+  read: boolean;
+  link?: string;
 }

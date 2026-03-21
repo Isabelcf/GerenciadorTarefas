@@ -86,6 +86,8 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
     { id: 'asana', name: 'Asana', description: 'Gerencie projetos complexos.', icon: Layout, category: 'tarefas', connected: false },
     { id: 'hubspot', name: 'HubSpot', description: 'Sincronize negócios e tickets.', icon: BarChart3, category: 'crm', connected: false },
     { id: 'slack', name: 'Slack', description: 'Receba notificações de tarefas.', icon: MessageSquare, category: 'comunicacao', connected: false },
+    { id: 'jira', name: 'Jira', description: 'Sincronize seus tickets e sprints.', icon: Layout, category: 'tarefas', connected: false },
+    { id: 'zendesk', name: 'Zendesk', description: 'Gerencie seus tickets de suporte.', icon: MessageSquare, category: 'crm', connected: false },
     { id: 'google-keep', name: 'Google Keep', description: 'Sincronize suas notas e lembretes.', icon: StickyNote, category: 'tarefas', connected: false },
   ]);
 
@@ -101,6 +103,8 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
       asana: { token: '' },
       hubspot: { key: '' },
       slack: { webhook: '' },
+      jira: { host: '', email: '', apiToken: '' },
+      zendesk: { subdomain: '', email: '', apiToken: '' },
       'google-keep': { clientId: '', clientSecret: '' }
     };
     const saved = localStorage.getItem('taskflow_api_keys');
@@ -303,6 +307,76 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
                                 type="password"
                                 className="h-12 sm:h-14 bg-white text-sm"
                               />
+                            </div>
+                          </div>
+                        )}
+
+                        {integration.id === 'jira' && (
+                          <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                            <div className="space-y-2 sm:space-y-3">
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">Host (ex: seu-dominio.atlassian.net)</Label>
+                              <Input 
+                                value={apiKeys.jira.host} 
+                                onChange={(e) => handleKeyChange('jira', 'host', e.target.value)}
+                                placeholder="seu-dominio.atlassian.net"
+                                className="h-12 sm:h-14 bg-white text-sm"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                              <div className="space-y-2 sm:space-y-3">
+                                <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">E-mail</Label>
+                                <Input 
+                                  value={apiKeys.jira.email} 
+                                  onChange={(e) => handleKeyChange('jira', 'email', e.target.value)}
+                                  placeholder="seu-email@atlassian.com"
+                                  className="h-12 sm:h-14 bg-white text-sm"
+                                />
+                              </div>
+                              <div className="space-y-2 sm:space-y-3">
+                                <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">API Token</Label>
+                                <Input 
+                                  value={apiKeys.jira.apiToken} 
+                                  onChange={(e) => handleKeyChange('jira', 'apiToken', e.target.value)}
+                                  placeholder="API Token"
+                                  type="password"
+                                  className="h-12 sm:h-14 bg-white text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {integration.id === 'zendesk' && (
+                          <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                            <div className="space-y-2 sm:space-y-3">
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">Subdomínio (ex: seu-subdominio)</Label>
+                              <Input 
+                                value={apiKeys.zendesk.subdomain} 
+                                onChange={(e) => handleKeyChange('zendesk', 'subdomain', e.target.value)}
+                                placeholder="seu-subdominio"
+                                className="h-12 sm:h-14 bg-white text-sm"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                              <div className="space-y-2 sm:space-y-3">
+                                <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">E-mail</Label>
+                                <Input 
+                                  value={apiKeys.zendesk.email} 
+                                  onChange={(e) => handleKeyChange('zendesk', 'email', e.target.value)}
+                                  placeholder="seu-email@dominio.com"
+                                  className="h-12 sm:h-14 bg-white text-sm"
+                                />
+                              </div>
+                              <div className="space-y-2 sm:space-y-3">
+                                <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">API Token</Label>
+                                <Input 
+                                  value={apiKeys.zendesk.apiToken} 
+                                  onChange={(e) => handleKeyChange('zendesk', 'apiToken', e.target.value)}
+                                  placeholder="API Token"
+                                  type="password"
+                                  className="h-12 sm:h-14 bg-white text-sm"
+                                />
+                              </div>
                             </div>
                           </div>
                         )}

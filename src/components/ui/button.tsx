@@ -25,7 +25,7 @@ import { cn } from "@/src/lib/utils"
  */
 const buttonVariants = cva(
   /* CLASSES BASE: Aplicadas a todos os botões independentemente da variante */
-  "inline-flex items-center justify-center whitespace-nowrap rounded-2xl text-sm font-black uppercase tracking-[0.15em] ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:translate-y-[4px] active:border-b-0",
+  "inline-flex items-center justify-center whitespace-normal text-center leading-tight rounded-2xl text-sm font-black uppercase tracking-[0.15em] ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:translate-y-[4px] active:border-b-0",
   {
     variants: {
       variant: {

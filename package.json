@@ -35,6 +35,7 @@
     "clsx": "^2.1.1",
     "cookie-session": "^2.1.1",
     "cors": "^2.8.6",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.3.1",
     "express": "^4.22.1",
     "google-auth-library": "^10.6.1",
@@ -45,6 +46,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.13.1",
+    "recharts": "^3.8.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "vite": "^6.2.0"

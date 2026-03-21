@@ -212,7 +212,7 @@ export default function Profile() {
               onClick={handleLogout}
             >
               <LogOut className="mr-2 sm:mr-4 w-6 h-6 sm:w-8 sm:h-8" />
-              Abandonar Missão (Sair)
+              Sair
             </Button>
             
             {/* Informações de Versão e Créditos */}
