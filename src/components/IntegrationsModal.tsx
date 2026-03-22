@@ -18,7 +18,7 @@
  * - Banner de sincronização escuro com efeito de brilho e ícone animado.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 /* Importação de componentes de diálogo do Radix UI estilizados para o projeto */
 import { 
   Dialog, 
@@ -50,6 +50,10 @@ import { toast } from "sonner";
 /* Utilitário para manipulação inteligente de classes CSS */
 import { cn } from "@/src/lib/utils";
 
+/* Importação de tipos globais */
+import { Notification } from "@/src/types";
+import { useLanguage } from '../contexts/LanguageContext';
+
 /**
  * INTERFACE: Integration
  * Define a estrutura de dados de uma integração individual.
@@ -72,23 +76,26 @@ interface IntegrationsModalProps {
   isOpen: boolean; /* Controla se o modal está visível */
   onClose: () => void; /* Função para fechar o modal */
   onSync: () => void; /* Função para disparar a sincronização de dados */
+  onAddNotification: (data: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void; /* Função para adicionar notificação */
 }
 
 /**
  * COMPONENTE: IntegrationsModal
  */
-export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModalProps) {
+export function IntegrationsModal({ isOpen, onClose, onSync, onAddNotification }: IntegrationsModalProps) {
+  const { t } = useLanguage();
+
   /* ESTADO: Lista de integrações disponíveis e seus estados de conexão */
   const [integrations, setIntegrations] = useState<Integration[]>([
-    { id: 'google-sheets', name: 'Google Planilhas', description: 'Sincronize tarefas de suas planilhas.', icon: Database, category: 'tarefas', connected: false },
-    { id: 'trello', name: 'Trello', description: 'Importe cartões de seus quadros.', icon: Layout, category: 'tarefas', connected: false },
-    { id: 'notion', name: 'Notion', description: 'Conecte suas bases de dados.', icon: Database, category: 'comunicacao', connected: false },
-    { id: 'asana', name: 'Asana', description: 'Gerencie projetos complexos.', icon: Layout, category: 'tarefas', connected: false },
-    { id: 'hubspot', name: 'HubSpot', description: 'Sincronize negócios e tickets.', icon: BarChart3, category: 'crm', connected: false },
-    { id: 'slack', name: 'Slack', description: 'Receba notificações de tarefas.', icon: MessageSquare, category: 'comunicacao', connected: false },
-    { id: 'jira', name: 'Jira', description: 'Sincronize seus tickets e sprints.', icon: Layout, category: 'tarefas', connected: false },
-    { id: 'zendesk', name: 'Zendesk', description: 'Gerencie seus tickets de suporte.', icon: MessageSquare, category: 'crm', connected: false },
-    { id: 'google-keep', name: 'Google Keep', description: 'Sincronize suas notas e lembretes.', icon: StickyNote, category: 'tarefas', connected: false },
+    { id: 'google-sheets', name: 'googleSheets', description: 'googleSheetsDesc', icon: Database, category: 'tarefas', connected: false },
+    { id: 'trello', name: 'Trello', description: 'trelloDesc', icon: Layout, category: 'tarefas', connected: false },
+    { id: 'notion', name: 'Notion', description: 'notionDesc', icon: Database, category: 'comunicacao', connected: false },
+    { id: 'asana', name: 'Asana', description: 'asanaDesc', icon: Layout, category: 'tarefas', connected: false },
+    { id: 'hubspot', name: 'HubSpot', description: 'hubspotDesc', icon: BarChart3, category: 'crm', connected: false },
+    { id: 'slack', name: 'Slack', description: 'slackDesc', icon: MessageSquare, category: 'comunicacao', connected: false },
+    { id: 'jira', name: 'Jira', description: 'jiraDesc', icon: Layout, category: 'tarefas', connected: false },
+    { id: 'zendesk', name: 'Zendesk', description: 'zendeskDesc', icon: MessageSquare, category: 'crm', connected: false },
+    { id: 'google-keep', name: 'Google Keep', description: 'googleKeepDesc', icon: StickyNote, category: 'tarefas', connected: false },
   ]);
 
   /* ESTADOS DE UI: Controle de carregamento e expansão de painéis */
@@ -138,7 +145,7 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
         const provider = event.data.provider;
         /* Marca a integração como conectada no estado local */
         setIntegrations(prev => prev.map(i => i.id === provider ? { ...i, connected: true } : i));
-        toast.success(`${provider === 'google' ? 'Google' : provider} conectado com sucesso!`);
+        toast.success(t('connectedSuccess', { provider: provider === 'google' ? 'Google' : provider }));
         handleSync(); /* Sincroniza os dados imediatamente após conectar */
       }
     };
@@ -159,7 +166,7 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
         /* Abre o popup do Google */
         window.open(url, 'google_oauth', 'width=600,height=700');
       } catch (error) {
-        toast.error("Erro ao iniciar autenticação com Google. Tente novamente.");
+        toast.error(t('authError'));
       }
     } else {
       /* Alterna a expansão do painel de configuração manual */
@@ -201,9 +208,9 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
     setIsSyncing(true);
     try {
       await onSync(); /* Chama a função de sincronização passada pelo Dashboard */
-      toast.success("Dados sincronizados com sucesso! Suas missões estão atualizadas.");
+      toast.success(t('syncSuccess'));
     } catch (error) {
-      toast.error("Erro ao sincronizar dados. Verifique suas conexões.");
+      toast.error(t('syncError'));
     } finally {
       setIsSyncing(false);
     }
@@ -212,18 +219,18 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       {/* CONTEÚDO DO MODAL: Estilo Soft UI com scroll interno e bordas 3D */}
-      <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] sm:rounded-[3.5rem] border-4 border-slate-200 p-6 sm:p-10 shadow-2xl">
+      <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] sm:rounded-[3.5rem] border-4 border-border p-6 sm:p-10 shadow-2xl bg-card">
         
         {/* CABEÇALHO: Título gamificado e descrição */}
         <DialogHeader className="px-2 sm:px-4 space-y-4 sm:space-y-6">
-          <DialogTitle className="text-2xl sm:text-4xl font-black flex items-center gap-4 sm:gap-6 text-slate-900 tracking-tighter italic uppercase">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-me-blue rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shadow-xl sm:shadow-2xl border-b-4 sm:border-b-8 border-blue-800 shrink-0">
+          <DialogTitle className="text-2xl sm:text-4xl font-black flex items-center gap-4 sm:gap-6 text-foreground tracking-tighter italic uppercase">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shadow-xl sm:shadow-2xl border-b-4 sm:border-b-8 border-primary-dark shrink-0">
               <Share2 className="w-6 h-6 sm:w-9 sm:h-9 text-white" />
             </div>
-            Conectar Mundos
+            {t('connectWorlds')}
           </DialogTitle>
-          <DialogDescription className="text-slate-500 font-bold text-base sm:text-xl leading-relaxed italic">
-            Centralize todas as suas missões conectando suas ferramentas favoritas ao seu Centro de Comando.
+          <DialogDescription className="text-foreground-muted font-bold text-base sm:text-xl leading-relaxed italic">
+            {t('centralizeMissions')}
           </DialogDescription>
         </DialogHeader>
 
@@ -241,7 +248,7 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
                     "rounded-[1.5rem] sm:rounded-[2.5rem] border-4 border-b-[6px] sm:border-b-[10px] transition-all overflow-hidden",
                     configured 
                       ? "bg-duo-green/5 border-duo-green/20 border-b-duo-green/30" 
-                      : "bg-white border-slate-200 border-b-slate-300 hover:border-slate-300"
+                      : "bg-card border-border border-b-border hover:border-border"
                   )}
                 >
                   {/* Item da Lista */}
@@ -250,16 +257,16 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
                       {/* Ícone do Serviço */}
                       <div className={cn(
                         "w-12 h-12 sm:w-20 sm:h-20 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center shrink-0 shadow-lg sm:shadow-xl border-b-2 sm:border-b-4",
-                        configured ? "bg-duo-green border-green-700 text-white" : "bg-slate-100 border-slate-200 text-slate-300"
+                        configured ? "bg-duo-green border-green-700 text-white" : "bg-background border-border text-foreground-muted/30"
                       )}>
                         <integration.icon className="w-6 h-6 sm:w-10 sm:h-10" />
                       </div>
                       <div>
-                        <h4 className="text-lg sm:text-2xl font-black text-slate-900 flex items-center gap-2 sm:gap-3 tracking-tight">
-                          {integration.name}
+                        <h4 className="text-lg sm:text-2xl font-black text-foreground flex items-center gap-2 sm:gap-3 tracking-tight">
+                          {t(integration.name) !== integration.name ? t(integration.name) : integration.name}
                           {configured && <Check className="w-4 h-4 sm:w-6 sm:h-6 text-duo-green animate-bounce" />}
                         </h4>
-                        <p className="text-xs sm:text-base font-bold text-slate-400 italic line-clamp-1 sm:line-clamp-none">{integration.description}</p>
+                        <p className="text-xs sm:text-base font-bold text-foreground-muted italic line-clamp-1 sm:line-clamp-none">{t(integration.description)}</p>
                       </div>
                     </div>
 
@@ -275,7 +282,7 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
                         )}
                       >
                         {integration.id === 'google-sheets' 
-                          ? (configured ? 'OK' : 'Conectar')
+                          ? (configured ? 'OK' : t('connect'))
                           : (isExpanded ? <ChevronUp className="w-5 h-5 sm:w-6 h-6" /> : <Settings2 className="w-5 h-5 sm:w-6 h-6" />)
                         }
                       </Button>
@@ -284,28 +291,28 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
 
                   {/* PAINEL DE CONFIGURAÇÃO: Abre ao clicar no ícone de engrenagem */}
                   {isExpanded && integration.id !== 'google-sheets' && (
-                    <div className="px-4 sm:px-8 pb-4 sm:pb-8 pt-0 border-t-2 sm:border-t-4 border-slate-100 bg-slate-50/50">
+                    <div className="px-4 sm:px-8 pb-4 sm:pb-8 pt-0 border-t-2 sm:border-t-4 border-border bg-background/50">
                       <div className="mt-4 sm:mt-8 space-y-4 sm:space-y-8">
                         {/* Campos Dinâmicos baseados no serviço */}
                         {integration.id === 'trello' && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                             <div className="space-y-2 sm:space-y-3">
-                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">API Key</Label>
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-foreground-muted ml-2 sm:ml-3">API Key</Label>
                               <Input 
                                 value={apiKeys.trello.key} 
                                 onChange={(e) => handleKeyChange('trello', 'key', e.target.value)}
                                 placeholder="Key"
-                                className="h-12 sm:h-14 bg-white text-sm"
+                                className="h-12 sm:h-14 bg-card text-sm border-2 border-border"
                               />
                             </div>
                             <div className="space-y-2 sm:space-y-3">
-                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2 sm:ml-3">Token</Label>
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-foreground-muted ml-2 sm:ml-3">Token</Label>
                               <Input 
                                 value={apiKeys.trello.token} 
                                 onChange={(e) => handleKeyChange('trello', 'token', e.target.value)}
                                 placeholder="Token"
                                 type="password"
-                                className="h-12 sm:h-14 bg-white text-sm"
+                                className="h-12 sm:h-14 bg-card text-sm border-2 border-border"
                               />
                             </div>
                           </div>
@@ -384,13 +391,20 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
                         {/* Botão para salvar as chaves digitadas */}
                         <Button 
                           variant="me"
-                          className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-[0_4px_0_0_#1e40af] sm:shadow-[0_6px_0_0_#1e40af] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[6px]"
+                          className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-[0_4px_0_0_var(--primary-dark)] sm:shadow-[0_6px_0_0_var(--primary-dark)] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[6px]"
                           onClick={() => {
                             setExpandedId(null);
-                            toast.success(`Configurações de ${integration.name} salvas!`);
+                            toast.success(t('settingsSaved', { name: t(integration.name) !== integration.name ? t(integration.name) : integration.name }));
+                            
+                            /* Notificação Real: Integração Concluída */
+                            onAddNotification({
+                              title: t('integrationConfigured'),
+                              message: t('integrationConfiguredMsg', { name: t(integration.name) !== integration.name ? t(integration.name) : integration.name }),
+                              type: 'integration'
+                            });
                           }}
                         >
-                          Salvar
+                          {t('save')}
                         </Button>
                       </div>
                     </div>
@@ -401,23 +415,23 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
           </div>
 
           {/* BANNER: SINCRONIZAÇÃO (Estilo Dark Mode Gamificado) */}
-          <div className="bg-slate-900 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 text-white relative overflow-hidden border-b-[8px] sm:border-b-[12px] border-slate-950 shadow-2xl">
+          <div className="bg-foreground rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 text-background relative overflow-hidden border-b-[8px] sm:border-b-[12px] border-foreground-muted shadow-2xl">
             <div className="relative z-10">
               <h4 className="text-xl sm:text-2xl font-black mb-3 sm:mb-4 flex items-center gap-3 sm:gap-4 italic uppercase tracking-tighter">
-                <RefreshCw className={cn("w-6 h-6 sm:w-8 sm:h-8 text-me-blue", isSyncing && "animate-spin")} />
-                Sincronização
+                <RefreshCw className={cn("w-6 h-6 sm:w-8 sm:h-8 text-primary", isSyncing && "animate-spin")} />
+                {t('sync')}
               </h4>
-              <p className="text-sm sm:text-lg font-bold text-slate-400 mb-6 sm:mb-8 leading-relaxed italic">
-                Mantenha seu progresso unificado. Sincronizamos automaticamente a cada 15 minutos.
+              <p className="text-sm sm:text-lg font-bold text-background/60 mb-6 sm:mb-8 leading-relaxed italic">
+                {t('syncDesc')}
               </p>
               <Button 
                 variant="secondary" 
                 size="lg" 
                 disabled={isSyncing}
                 onClick={handleSync}
-                className="w-full font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] bg-white text-slate-900 hover:bg-slate-100 shadow-xl text-xs sm:text-base"
+                className="w-full font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] bg-background text-foreground hover:bg-background/90 shadow-xl text-xs sm:text-base"
               >
-                {isSyncing ? "Sincronizando..." : "Sincronizar Agora 🔄"}
+                {isSyncing ? t('syncing') : t('syncNow')}
               </Button>
             </div>
             {/* Efeito Visual de Fundo */}
@@ -430,31 +444,31 @@ export function IntegrationsModal({ isOpen, onClose, onSync }: IntegrationsModal
           <div className="flex items-start gap-4 sm:gap-6 p-6 sm:p-8 bg-duo-yellow/10 border-2 sm:border-4 border-duo-yellow/20 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-inner">
             <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 text-duo-yellow-dark shrink-0 mt-1" />
             <div className="text-duo-yellow-dark">
-              <p className="font-black mb-1 sm:mb-2 text-lg sm:text-xl italic uppercase tracking-tight">Atenção! 🛡️</p>
+              <p className="font-black mb-1 sm:mb-2 text-lg sm:text-xl italic uppercase tracking-tight">{t('attention')}</p>
               <p className="font-bold text-xs sm:text-base italic leading-relaxed">
-                Seus dados são armazenados localmente e nunca saem do seu dispositivo.
+                {t('securityNotice')}
               </p>
             </div>
           </div>
         </div>
 
         {/* RODAPÉ DO MODAL: Botões de Navegação */}
-        <div className="mt-6 sm:mt-10 flex justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 border-t-2 sm:border-t-4 border-slate-100">
+        <div className="mt-6 sm:mt-10 flex justify-center gap-4 sm:gap-6 pt-6 sm:pt-8 border-t-2 sm:border-t-4 border-border">
           <Button 
             variant="outline" 
             size="lg" 
             onClick={onClose} 
-            className="rounded-xl sm:rounded-2xl px-8 sm:px-12 h-12 sm:h-16 font-black uppercase tracking-widest text-[10px] sm:text-xs border-2 sm:border-4 border-b-4 sm:border-b-8 border-slate-200 hover:bg-slate-50 transition-all"
+            className="rounded-xl sm:rounded-2xl px-8 sm:px-12 h-12 sm:h-16 font-black uppercase tracking-widest text-[10px] sm:text-xs border-2 sm:border-4 border-b-4 sm:border-b-8 border-border hover:bg-background transition-all"
           >
-            Voltar
+            {t('back')}
           </Button>
           <Button 
             variant="duo" 
             size="lg" 
             onClick={onClose} 
-            className="rounded-xl sm:rounded-2xl px-10 sm:px-16 h-12 sm:h-16 font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-[0_4px_0_0_#46a302] sm:shadow-[0_8px_0_0_#46a302] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[8px] transition-all"
+            className="rounded-xl sm:rounded-2xl px-10 sm:px-16 h-12 sm:h-16 font-black uppercase tracking-widest text-[10px] sm:text-xs shadow-[0_4px_0_0_var(--secondary-dark)] sm:shadow-[0_8px_0_0_var(--secondary-dark)] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[8px] transition-all"
           >
-            Concluir
+            {t('finish')}
           </Button>
         </div>
       </DialogContent>

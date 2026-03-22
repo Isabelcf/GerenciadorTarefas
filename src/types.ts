@@ -9,7 +9,7 @@
 export type Priority = 'low' | 'medium' | 'high';
 
 /* Categorias temáticas para organização das tarefas */
-export type Category = 'trabalho' | 'estudos' | 'pessoal' | 'saude' | 'outros';
+export type Category = string;
 
 /* Status possíveis para filtragem na listagem principal */
 export type FilterStatus = 'all' | 'pending' | 'in-progress' | 'completed';
@@ -48,6 +48,17 @@ export interface HistoryEntry {
 }
 
 /**
+ * INTERFACE: TimeSession
+ * Representa uma sessão de foco cronometrada.
+ */
+export interface TimeSession {
+  id: string;
+  startTime: number;
+  endTime: number;
+  duration: number; /* em segundos */
+}
+
+/**
  * INTERFACE: Task
  * A estrutura completa de uma tarefa no sistema.
  */
@@ -67,9 +78,11 @@ export interface Task {
   timerSeconds?: number;
   timerIsRunning?: boolean;
   totalTimeSpent?: number;
+  timeLog?: TimeSession[];
   /* Comentários e Histórico */
   comments?: Comment[];
   history?: HistoryEntry[];
+  attachments?: { name: string; url: string; type: string }[];
 }
 
 /**
@@ -82,6 +95,7 @@ export interface TaskFormData {
   category: Category;
   priority: Priority;
   inProgress?: boolean;
+  attachments?: { name: string; url: string; type: string }[];
 }
 
 /**

@@ -14,11 +14,17 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 /* Inicializa a aplicação React no elemento com ID 'root' definido no index.html */
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {/* Renderiza o componente principal que contém as rotas e lógica global */}
-    <App />
+    <ThemeProvider>
+      <LanguageProvider>
+        {/* Renderiza o componente principal que contém as rotas e lógica global */}
+        <App />
+      </LanguageProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

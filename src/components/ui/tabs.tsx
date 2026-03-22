@@ -34,7 +34,7 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       /* LAYOUT: Flexbox horizontal centralizado */
-      "inline-flex h-16 items-center justify-center rounded-[1.5rem] bg-slate-100 p-2 text-slate-500 border-2 border-slate-200 shadow-inner",
+      "inline-flex h-16 items-center justify-center rounded-[1.5rem] bg-accent/5 p-2 text-muted-foreground border-2 border-border shadow-inner",
       className
     )}
     {...props}
@@ -54,9 +54,9 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       /* ESTILO BASE: Texto em negrito, uppercase e transições suaves */
-      "inline-flex items-center justify-center whitespace-nowrap rounded-xl px-8 py-3 text-sm font-black uppercase tracking-[0.15em] ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-me-purple focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-xl px-8 py-3 text-sm font-black uppercase tracking-[0.15em] ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       /* ESTADO ATIVO: Quando a aba está selecionada, aplica o estilo Soft UI 3D */
-      "data-[state=active]:bg-white data-[state=active]:text-me-purple data-[state=active]:shadow-lg data-[state=active]:border-b-4 data-[state=active]:border-me-purple",
+      "data-[state=active]:bg-card data-[state=active]:text-secondary data-[state=active]:shadow-lg data-[state=active]:border-b-4 data-[state=active]:border-secondary",
       /* Efeito de clique sutil */
       "active:scale-95",
       className
@@ -78,7 +78,7 @@ const TabsContent = React.forwardRef<
     ref={ref}
     className={cn(
       /* Espaçamento superior para separar o conteúdo dos botões */
-      "mt-8 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-me-purple focus-visible:ring-offset-2",
+      "mt-8 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2",
       className
     )}
     {...props}

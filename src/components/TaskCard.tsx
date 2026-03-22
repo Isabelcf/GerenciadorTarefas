@@ -34,6 +34,7 @@ import { motion } from "motion/react";
 import { cn } from "@/src/lib/utils";
 /* Componente de botão customizado do projeto */
 import { Button } from "@/src/components/ui/button";
+import { useLanguage } from "../contexts/LanguageContext";
 
 /**
  * INTERFACE: TaskCardProps
@@ -52,9 +53,9 @@ interface TaskCardProps {
  * Define cores e rótulos para cada nível de prioridade.
  */
 const priorityConfig: Record<Priority, { color: string, bg: string, border: string, label: string }> = {
-  low: { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100', label: 'Baixa' },
-  medium: { color: 'text-slate-700', bg: 'bg-slate-100', border: 'border-slate-200', label: 'Média' },
-  high: { color: 'text-slate-900', bg: 'bg-slate-200', border: 'border-slate-300', label: 'Alta' },
+  low: { color: 'text-foreground-muted', bg: 'bg-background', border: 'border-border', label: 'Baixa' },
+  medium: { color: 'text-foreground', bg: 'bg-background', border: 'border-border', label: 'Média' },
+  high: { color: 'text-foreground', bg: 'bg-background', border: 'border-border', label: 'Alta' },
 };
 
 /**
@@ -87,8 +88,22 @@ const sourceIcons: Record<string, React.ElementType> = {
  * COMPONENTE: TaskCard
  */
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, onJoin, onClick }) => {
+  const { t } = useLanguage();
   /* Identifica a configuração de prioridade e o ícone de origem */
-  const priority = priorityConfig[task.priority];
+  const priority = {
+    low: { color: 'text-foreground-muted', bg: 'bg-background', border: 'border-border', label: t('low') },
+    medium: { color: 'text-foreground', bg: 'bg-background', border: 'border-border', label: t('medium') },
+    high: { color: 'text-foreground', bg: 'bg-background', border: 'border-border', label: t('high') },
+  }[task.priority];
+
+  const categoryLabels: Record<Category, string> = {
+    trabalho: t('work'),
+    estudos: t('studies'),
+    pessoal: t('personal'),
+    saude: t('health'),
+    outros: t('others'),
+  };
+
   const SourceIcon = sourceIcons[task.source || 'local'] || Share2;
 
   return (
@@ -100,7 +115,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
         opacity: 1, 
         scale: 1,
         /* Cor de fundo muda dinamicamente conforme o estado da tarefa */
-        backgroundColor: task.completed ? "var(--color-duo-green)" : task.inProgress ? "white" : "var(--color-duo-yellow)",
+        backgroundColor: task.completed ? "var(--success)" : task.inProgress ? "var(--card)" : "var(--warning)",
       }}
       whileHover={{ y: -8 }} /* Efeito de flutuação ao passar o mouse */
       whileTap={{ y: 0, scale: 0.98 }} /* Efeito de compressão ao clicar */
@@ -112,10 +127,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
         "border-4",
         /* Estilização condicional de bordas e sombras baseada no status */
         task.completed 
-          ? "border-duo-green-dark shadow-[0_6px_0_0_#4ade80] md:shadow-[0_10px_0_0_#4ade80]" 
+          ? "border-success-dark shadow-[0_6px_0_0_var(--success-dark)] md:shadow-[0_10px_0_0_var(--success-dark)]" 
           : task.inProgress 
-            ? "border-me-purple shadow-[0_6px_0_0_#c084fc] md:shadow-[0_10px_0_0_#c084fc]" 
-            : "border-duo-yellow-dark shadow-[0_6px_0_0_#facc15] md:shadow-[0_10px_0_0_#facc15]"
+            ? "border-accent shadow-[0_6px_0_0_var(--accent-dark)] md:shadow-[0_10px_0_0_var(--accent-dark)]" 
+            : "border-warning-dark shadow-[0_6px_0_0_var(--warning-dark)] md:shadow-[0_10px_0_0_var(--warning-dark)]"
       )}
     >
       <div className="flex items-start gap-4 md:gap-6">
@@ -129,8 +144,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
           className={cn(
             "mt-1 w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300 border-2 md:border-4 shrink-0",
             task.completed 
-              ? "bg-white border-white text-duo-green scale-110 shadow-lg" 
-              : "bg-white border-slate-200 text-slate-200 hover:text-slate-400 hover:border-slate-300"
+              ? "bg-white border-white text-success scale-110 shadow-lg" 
+              : "bg-card border-border text-foreground-muted hover:text-foreground hover:border-foreground-muted"
           )}
         >
           {/* Ícone muda de círculo vazio para check preenchido */}
@@ -143,7 +158,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
             <h3 className={cn(
               "font-black text-lg sm:text-xl md:text-2xl leading-tight transition-all tracking-tight truncate",
               /* Texto fica branco se o fundo for colorido (amarelo ou verde) */
-              task.completed || !task.inProgress ? "text-white" : "text-slate-900",
+              task.completed || !task.inProgress ? "text-white" : "text-foreground",
             )}>
               {task.title}
             </h3>
@@ -152,9 +167,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
           {/* DESCRIÇÃO: Limitada a 2 linhas para manter o card compacto */}
           <p className={cn(
             "text-sm md:text-base mb-4 md:mb-6 line-clamp-2 transition-all font-bold opacity-80",
-            task.completed || !task.inProgress ? "text-white" : "text-slate-500",
+            task.completed || !task.inProgress ? "text-white" : "text-foreground-muted",
           )}>
-            {task.description || 'Nenhuma descrição adicionada para esta missão.'}
+            {task.description || t('noDescription')}
           </p>
 
           {/* RODAPÉ DO CARD: Categoria e Ações Rápidas */}
@@ -162,7 +177,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
             {/* Tag de Categoria */}
             <div className={cn(
               "flex items-center gap-2 text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em]",
-              task.completed || !task.inProgress ? "text-white/70" : "text-slate-400"
+              task.completed || !task.inProgress ? "text-white/70" : "text-foreground-muted"
             )}>
               <div className="flex items-center gap-1.5 bg-black/5 px-2 py-0.5 md:px-2.5 md:py-1 rounded-full">
                 <Tag className="w-2.5 h-2.5 md:w-4 md:h-4" />
@@ -177,13 +192,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
                 <Button 
                   variant="secondary"
                   size="sm" 
-                  className="bg-white text-duo-yellow-dark hover:bg-slate-50 border-2 border-slate-100 rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] h-8 md:h-10 px-3 md:px-4"
+                  className="bg-card text-warning-dark hover:bg-background border-2 border-border rounded-xl font-black uppercase tracking-widest text-[8px] md:text-[10px] h-8 md:h-10 px-3 md:px-4"
                   onClick={(e) => {
                     e.stopPropagation();
                     onJoin(task.id);
                   }}
                 >
-                  Começar
+                  {t('start')}
                 </Button>
               )}
               
@@ -199,7 +214,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
                   "h-8 w-8 md:h-12 md:w-12 rounded-xl md:rounded-2xl transition-all",
                   task.completed || !task.inProgress
                     ? "text-white/50 hover:text-white hover:bg-white/10" 
-                    : "text-slate-200 hover:text-destructive hover:bg-destructive/5"
+                    : "text-foreground-muted hover:text-destructive hover:bg-destructive/5"
                 )}
               >
                 <Trash2 className="w-4 h-4 md:w-6 md:h-6" />
@@ -213,8 +228,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onToggle, onDelete, on
       <div className="absolute -top-3 md:-top-4 right-4 md:right-6 flex gap-2 md:gap-3">
         {/* Badge "Em Foco" para tarefas ativas */}
         {task.inProgress && !task.completed && (
-          <span className="px-3 py-1.5 md:px-4 md:py-2 bg-me-purple text-white text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl border-b-2 md:border-b-4 border-me-purple-dark">
-            Foco ⚡
+          <span className="px-3 py-1.5 md:px-4 md:py-2 bg-accent text-white text-[8px] md:text-[10px] font-black rounded-full uppercase tracking-widest shadow-xl border-b-2 md:border-b-4 border-accent-dark">
+            {t('focusBadge')}
           </span>
         )}
         {/* Badge do Timer Pomodoro: Mostra o tempo restante se estiver rodando */}

@@ -56,6 +56,8 @@ import { Separator } from "@/src/components/ui/separator";
 import { toast } from 'sonner';
 /* Utilitário para manipulação inteligente de classes CSS */
 import { cn } from "@/src/lib/utils";
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * INTERFACE: TaskDetailsModalProps
@@ -72,16 +74,20 @@ interface TaskDetailsModalProps {
  * COMPONENTE: TaskDetailsModal
  */
 export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDetailsModalProps) {
+  const { theme, palette } = useTheme();
+  const { t, language } = useLanguage();
   /* ESTADO: Texto temporário para o campo de nova sub-tarefa */
   const [newItemText, setNewItemText] = useState('');
   /* ESTADO: Texto temporário para o campo de novo comentário */
   const [newCommentText, setNewCommentText] = useState('');
   /* ESTADO: Anexos temporários para o novo comentário */
   const [attachments, setAttachments] = useState<{ name: string; url: string; type: string }[]>([]);
-  /* ESTADO: Aba ativa (Checklist, Comentários ou Histórico) */
-  const [activeTab, setActiveTab] = useState<'checklist' | 'comments' | 'history'>('checklist');
+  /* ESTADO: Aba ativa (Checklist, Comentários, Histórico ou Foco) */
+  const [activeTab, setActiveTab] = useState<'checklist' | 'comments' | 'history' | 'focus'>('checklist');
   /* REF: Referência para o input de arquivo oculto */
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /* REF: Referência para o input de arquivo da tarefa principal */
+  const taskFileInputRef = useRef<HTMLInputElement>(null);
 
   /* Se não houver tarefa selecionada, o modal não deve renderizar nada */
   if (!task) return null;
@@ -118,7 +124,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
     const updatedTask = {
       ...task,
       checklist: [...(task.checklist || []), newItem],
-      history: addHistoryEntry('Sub-tarefa adicionada', `"${newItem.text}"`)
+      history: addHistoryEntry(t('subtaskAdded'), `"${newItem.text}"`)
     };
 
     onUpdateTask(updatedTask);
@@ -139,7 +145,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
       ...task,
       checklist: updatedChecklist,
       history: addHistoryEntry(
-        item?.completed ? 'Sub-tarefa reaberta' : 'Sub-tarefa concluída', 
+        item?.completed ? t('subtaskReopened') : t('subtaskCompleted'), 
         `"${item?.text}"`
       )
     });
@@ -156,7 +162,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
     onUpdateTask({
       ...task,
       checklist: updatedChecklist,
-      history: addHistoryEntry('Sub-tarefa removida', `"${item?.text}"`)
+      history: addHistoryEntry(t('subtaskRemoved'), `"${item?.text}"`)
     });
   };
 
@@ -230,9 +236,9 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
         setAttachments(prev => [...prev, newAttachment]);
         
         if (isImage) {
-          toast.success(`Imagem "${file.name}" anexada! 📸`);
+          toast.success(t('imageAttachedToast', { name: file.name }));
         } else {
-          toast.success(`Arquivo "${file.name}" anexado! 📎`);
+          toast.success(t('fileAttachedToast', { name: file.name }));
         }
       };
       reader.readAsDataURL(file);
@@ -255,7 +261,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
    * Solicita uma URL ao usuário e a insere no comentário.
    */
   const handleAddLink = () => {
-    const url = window.prompt("Insira a URL do link (ex: https://google.com):");
+    const url = window.prompt(t('enterUrlPrompt'));
     if (url) {
       const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
       setNewCommentText(prev => prev + (prev ? ' ' : '') + formattedUrl + ' ');
@@ -274,26 +280,92 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
       id: crypto.randomUUID(),
       text: newCommentText.trim(),
       createdAt: Date.now(),
-      author: 'Você',
+      author: t('you'),
       attachments: attachments.length > 0 ? attachments : undefined
     };
 
     onUpdateTask({
       ...task,
       comments: [...(task.comments || []), newComment],
-      history: addHistoryEntry('Comentário adicionado')
+      history: addHistoryEntry(t('commentAdded'))
     });
 
     /* Simulação: Refletir comentário no board de integração */
     if (task.source && task.source !== 'local') {
-      toast.info(`Nota sincronizada com ${task.source.toUpperCase()}! 🔄`, {
-        description: "Seu comentário foi refletido no board de origem."
+      toast.info(t('syncNoteToast', { source: task.source.toUpperCase() }), {
+        description: t('syncNoteDesc')
       });
       console.log(`[Sync] Refletindo comentário na tarefa ${task.id} (${task.source}): ${newComment.text}`);
     }
 
     setNewCommentText('');
     setAttachments([]);
+  };
+
+  /**
+   * FUNÇÃO: handleTaskFileChange
+   * Adiciona um anexo diretamente à missão.
+   */
+  const handleTaskFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const newAttachment = {
+          name: file.name,
+          url: base64String,
+          type: file.type
+        };
+        
+        onUpdateTask({
+          ...task,
+          attachments: [...(task.attachments || []), newAttachment],
+          history: addHistoryEntry(t('attachmentAdded'), file.name)
+        });
+        
+        toast.success(t('fileAttachedToMissionToast', { name: file.name }));
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+  };
+
+  /**
+   * FUNÇÃO: handleAddTaskLink
+   * Adiciona um link diretamente à missão.
+   */
+  const handleAddTaskLink = () => {
+    const url = window.prompt(t('enterUrlPrompt'));
+    if (url) {
+      const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
+      const newAttachment = {
+        name: url.replace(/^https?:\/\//, '').split('/')[0],
+        url: formattedUrl,
+        type: 'url'
+      };
+      
+      onUpdateTask({
+        ...task,
+        attachments: [...(task.attachments || []), newAttachment],
+        history: addHistoryEntry(t('linkAddedToMission'), formattedUrl)
+      });
+      
+      toast.success(t('linkAddedToMissionToast'));
+    }
+  };
+
+  /**
+   * FUNÇÃO: removeTaskAttachment
+   * Remove um anexo da missão.
+   */
+  const removeTaskAttachment = (index: number) => {
+    const updatedAttachments = (task.attachments || []).filter((_, i) => i !== index);
+    onUpdateTask({
+      ...task,
+      attachments: updatedAttachments,
+      history: addHistoryEntry(t('attachmentRemoved'))
+    });
   };
 
   /**
@@ -309,7 +381,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
       timerIsRunning: isStarting,
       timerSeconds: task.timerSeconds ?? 1500, /* 25 minutos por padrão */
       inProgress: true, /* Garante que a tarefa esteja marcada como ativa */
-      history: addHistoryEntry(isStarting ? 'Timer iniciado' : 'Timer pausado')
+      history: addHistoryEntry(isStarting ? t('timerStarted') : t('timerPaused'))
     });
   };
 
@@ -374,7 +446,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       {/* CONTEÚDO DO MODAL: Estilizado com bordas grossas e cantos arredondados */}
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-hidden rounded-[2rem] sm:rounded-[3rem] border-4 border-slate-200 p-0 shadow-2xl">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-hidden rounded-[2rem] sm:rounded-[3rem] border-4 border-border p-0 shadow-2xl bg-card">
         {/* Container de Scroll Interno: Garante que a barra de rolagem não ultrapasse as bordas arredondadas */}
         <div className="overflow-y-auto overflow-x-hidden max-h-[90vh] p-6 sm:p-10 pr-4 sm:pr-8 custom-scrollbar">
         
@@ -385,32 +457,107 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             <span className={cn(
               "text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl uppercase tracking-[0.2em] border-2 border-b-4",
               task.priority === 'high' ? "bg-red-50 text-red-600 border-red-200" :
-              task.priority === 'medium' ? "bg-duo-yellow/10 text-duo-yellow-dark border-duo-yellow/20" :
-              "bg-slate-50 text-slate-600 border-slate-200"
+              task.priority === 'medium' ? "bg-secondary/10 text-secondary-dark border-secondary/20" :
+              "bg-background text-foreground-muted border-border"
             )}>
-              {task.priority === 'high' ? '🔥 Crítica' : 
-               task.priority === 'medium' ? '⚡ Importante' : '🍃 Leve'}
+              {task.priority === 'high' ? t('critical') : 
+               task.priority === 'medium' ? t('important') : t('lightPriority')}
             </span>
             {/* Badge de Status: Em Foco */}
             {task.inProgress && (
-              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-me-purple text-white uppercase tracking-[0.2em] border-b-4 border-me-purple-dark shadow-lg">
-                Em Foco
+              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-accent text-white uppercase tracking-[0.2em] border-b-4 border-accent-dark shadow-lg">
+                {t('inFocus')}
               </span>
             )}
             {/* Badge de Status: Concluída */}
             {task.completed && (
-              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-duo-green text-white uppercase tracking-[0.2em] border-b-4 border-duo-green-dark shadow-lg">
-                Concluída
+              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-primary text-white uppercase tracking-[0.2em] border-b-4 border-primary-dark shadow-lg">
+                {t('completedBadge')}
               </span>
             )}
           </div>
 
-          <DialogTitle className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter italic uppercase">{task.title}</DialogTitle>
+          <DialogTitle className="text-2xl sm:text-4xl font-black text-foreground tracking-tighter italic uppercase">{task.title}</DialogTitle>
           
           {/* DESCRIÇÃO: Card com fundo suave e borda 3D */}
-          <DialogDescription className="text-slate-600 font-bold text-base sm:text-xl leading-relaxed bg-slate-50 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-slate-100 italic">
-            {task.description || 'Nenhum detalhe adicional foi registrado para esta missão.'}
-          </DialogDescription>
+          <div className="space-y-4">
+            <DialogDescription className="text-foreground-muted font-bold text-base sm:text-xl leading-relaxed bg-background p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 border-border italic">
+              {task.description || t('noDetails')}
+            </DialogDescription>
+
+            {/* ANEXOS DA MISSÃO */}
+            <div className="flex flex-wrap gap-3 px-2">
+              {(task.attachments || []).map((att, index) => (
+                <div key={index} className="group relative flex items-center gap-3 bg-white border-2 border-slate-100 rounded-2xl p-3 pr-4 shadow-sm hover:border-me-blue transition-all animate-in zoom-in-95 duration-200">
+                  {att.type.startsWith('image/') ? (
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100">
+                      <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : att.type === 'url' ? (
+                    <div className="w-10 h-10 rounded-lg bg-me-purple/10 flex items-center justify-center">
+                      <LinkIcon className="w-5 h-5 text-me-purple" />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                      <Paperclip className="w-5 h-5 text-slate-400" />
+                    </div>
+                  )}
+                  
+                  <div className="flex flex-col min-w-0">
+                    <a 
+                      href={att.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-xs font-black text-slate-700 hover:text-me-blue truncate max-w-[120px]"
+                    >
+                      {att.name}
+                    </a>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                      {att.type === 'url' ? t('externalLink') : t('file')}
+                    </span>
+                  </div>
+
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 rounded-lg text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeTaskAttachment(index)}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+
+              {/* Botões para adicionar novos anexos à missão */}
+              <div className="flex gap-2">
+                <input 
+                  type="file" 
+                  ref={taskFileInputRef} 
+                  onChange={handleTaskFileChange} 
+                  className="hidden" 
+                  accept="image/*,application/pdf,text/plain"
+                />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-12 w-12 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 hover:text-me-blue hover:border-me-blue hover:bg-me-blue/5"
+                  onClick={() => taskFileInputRef.current?.click()}
+                  title={t('attachFile')}
+                >
+                  <Plus className="w-5 h-5" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-12 w-12 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 hover:text-me-purple hover:border-me-purple hover:bg-me-purple/5"
+                  onClick={handleAddTaskLink}
+                  title={t('addLink')}
+                >
+                  <LinkIcon className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogHeader>
 
         {/* METADADOS: Categoria e Data de Criação */}
@@ -421,37 +568,37 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="uppercase tracking-widest">Iniciada em {new Date(task.createdAt).toLocaleDateString('pt-BR')}</span>
+            <span className="uppercase tracking-widest">{t('startedAt')} {new Date(task.createdAt).toLocaleDateString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES')}</span>
           </div>
         </div>
 
         {/* WIDGET: TIMER POMODORO (Estilo Hardware/Widget) */}
         <div className={cn(
-          "bg-white border-4 border-slate-200 border-b-[8px] sm:border-b-[12px] rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-8 mb-8 sm:mb-10 flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-8 group/timer transition-all hover:border-slate-300",
+          "bg-card border-4 border-border border-b-[8px] sm:border-b-[12px] rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-8 mb-8 sm:mb-10 flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-8 group/timer transition-all hover:border-border shadow-xl sm:shadow-2xl",
           task.completed && "opacity-80 grayscale-[0.5]"
         )}>
           <div className="flex items-center gap-4 sm:gap-8 w-full sm:w-auto">
             {/* Círculo Visual do Timer */}
             <div className={cn(
               "w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-[2rem] border-4 flex items-center justify-center transition-all duration-500 shadow-xl sm:shadow-2xl shrink-0",
-              task.timerIsRunning ? "border-red-500 bg-red-50 animate-pulse" : "border-slate-200 bg-white",
-              task.completed && "border-slate-300 bg-slate-50"
+              task.timerIsRunning ? "border-red-500 bg-red-50 animate-pulse" : "border-border bg-card",
+              task.completed && "border-border bg-background"
             )}>
-              <Timer className={cn("w-8 h-8 sm:w-12 sm:h-12", task.timerIsRunning ? "text-red-500" : "text-slate-200")} />
+              <Timer className={cn("w-8 h-8 sm:w-12 sm:h-12", task.timerIsRunning ? "text-red-500" : "text-foreground-muted")} />
             </div>
             <div className="flex-1">
               {/* Display do Tempo Restante ou Tempo Total */}
-              <div className="text-3xl sm:text-5xl font-black tracking-tighter tabular-nums text-slate-900 leading-none italic">
+              <div className="text-3xl sm:text-5xl font-black tracking-tighter tabular-nums text-foreground leading-none italic">
                 {task.completed ? formatTotalTime(task.totalTimeSpent ?? 0) : formatTime(task.timerSeconds ?? 1500)}
               </div>
               <div className="flex flex-col gap-1 mt-2 sm:mt-3">
-                <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-                  {task.completed ? 'Tempo Total Investido' : 'Modo Foco Pomodoro'}
+                <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-foreground-muted">
+                  {task.completed ? t('totalTimeInvested') : t('pomodoroFocusMode')}
                 </span>
                 {/* Tempo Total Acumulado (apenas se não estiver concluída, pois já aparece no display principal se estiver) */}
                 {!task.completed && task.totalTimeSpent && (
-                  <span className="text-[8px] sm:text-[10px] font-black text-duo-green uppercase tracking-[0.2em] flex items-center gap-2 mt-1">
-                    <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" /> Esforço: {formatTotalTime(task.totalTimeSpent)}
+                  <span className="text-[8px] sm:text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2 mt-1">
+                    <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" /> {t('effort')}: {formatTotalTime(task.totalTimeSpent)}
                   </span>
                 )}
               </div>
@@ -471,9 +618,9 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 )}
               >
                 {task.timerIsRunning ? (
-                  <><Pause className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 fill-current" /> Pausar</>
+                  <><Pause className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 fill-current" /> {t('pause')}</>
                 ) : (
-                  <><Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 fill-current" /> Iniciar</>
+                  <><Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 fill-current" /> {t('startAction')}</>
                 )}
               </Button>
               
@@ -484,7 +631,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                   size="icon" 
                   onClick={resetTimer}
                   disabled={task.completed}
-                  title="Reiniciar Timer"
+                  title={t('resetTimer')}
                   className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl text-slate-300 hover:text-slate-900 hover:bg-slate-100 border-2 border-transparent hover:border-slate-200 disabled:opacity-30"
                 >
                   <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -494,7 +641,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                   size="icon" 
                   onClick={clearTimer}
                   disabled={task.completed}
-                  title="Limpar Dados do Timer"
+                  title={t('clearTimerData')}
                   className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl text-slate-300 hover:text-red-500 hover:bg-red-50 border-2 border-transparent hover:border-red-100 disabled:opacity-30"
                 >
                   <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -513,33 +660,44 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             className={cn(
               "px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-2 sm:border-4 border-b-4 sm:border-b-8 shrink-0",
               activeTab === 'checklist' 
-                ? "bg-me-blue text-white border-me-blue-dark shadow-lg" 
-                : "bg-white text-slate-400 border-slate-100 hover:border-slate-200"
+                ? "bg-primary text-white border-primary-dark shadow-lg" 
+                : "bg-card text-foreground-muted border-border hover:border-foreground-muted"
             )}
           >
-            Checklist
+            {t('checklist')}
           </button>
           <button
             onClick={() => setActiveTab('comments')}
             className={cn(
               "px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-2 sm:border-4 border-b-4 sm:border-b-8 shrink-0",
               activeTab === 'comments' 
-                ? "bg-me-purple text-white border-me-purple-dark shadow-lg" 
-                : "bg-white text-slate-400 border-slate-100 hover:border-slate-200"
+                ? "bg-accent text-white border-accent-dark shadow-lg" 
+                : "bg-card text-foreground-muted border-border hover:border-foreground-muted"
             )}
           >
-            Notas & Links
+            {t('notesLinks')}
           </button>
           <button
             onClick={() => setActiveTab('history')}
             className={cn(
               "px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-2 sm:border-4 border-b-4 sm:border-b-8 shrink-0",
               activeTab === 'history' 
-                ? "bg-slate-900 text-white border-black shadow-lg" 
-                : "bg-white text-slate-400 border-slate-100 hover:border-slate-200"
+                ? "bg-foreground text-background border-foreground-muted shadow-lg" 
+                : "bg-card text-foreground-muted border-border hover:border-foreground-muted"
             )}
           >
-            Histórico
+            {t('history')}
+          </button>
+          <button
+            onClick={() => setActiveTab('focus')}
+            className={cn(
+              "px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-2 sm:border-4 border-b-4 sm:border-b-8 shrink-0",
+              activeTab === 'focus' 
+                ? "bg-secondary text-white border-secondary-dark shadow-lg" 
+                : "bg-card text-foreground-muted border-border hover:border-foreground-muted"
+            )}
+          >
+            {t('focusSessions')}
           </button>
         </div>
 
@@ -549,12 +707,12 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2 sm:px-4">
               <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter">
                 <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 text-me-blue" />
-                Checklist
+                {t('checklist')}
               </h4>
               {/* Contador de Progresso */}
               {totalCount > 0 && (
                 <span className="text-[8px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] bg-slate-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border-2 border-slate-100 self-start sm:self-auto">
-                  {completedCount} de {totalCount} Concluídos
+                  {completedCount} {t('doneOf')} {totalCount} {t('completedOf')}
                 </span>
               )}
             </div>
@@ -576,7 +734,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             {!task.completed && (
               <form onSubmit={handleAddChecklistItem} className="flex gap-2 sm:gap-4">
                 <Input
-                  placeholder="Próximo passo?"
+                  placeholder={t('nextStep')}
                   value={newItemText}
                   onChange={(e) => setNewItemText(e.target.value)}
                   className="h-12 sm:h-16 text-base sm:text-lg rounded-xl sm:rounded-[1.5rem] border-2 sm:border-4 border-slate-200 border-b-4 sm:border-b-8 focus:border-me-blue transition-all"
@@ -597,7 +755,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
               {(task.checklist || []).length === 0 ? (
                 /* Estado Vazio do Checklist */
                 <div className="py-10 sm:py-16 text-center border-4 border-dashed border-slate-100 rounded-[2rem] sm:rounded-[3rem] bg-slate-50/30">
-                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">Nenhum passo definido.</p>
+                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">{t('noStepsDefined')}</p>
                 </div>
               ) : (
                 (task.checklist || []).map((item) => (
@@ -657,14 +815,14 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
           <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter px-2 sm:px-4">
               <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-me-purple" />
-              Notas & Comentários
+              {t('notesLinks')}
             </h4>
 
             {/* INPUT PARA NOVO COMENTÁRIO */}
             <form onSubmit={handleAddComment} className="flex flex-col gap-4">
               <div className="relative">
                 <textarea
-                  placeholder="Adicione uma nota, link ou observação..."
+                  placeholder={t('addNotePlaceholder')}
                   value={newCommentText}
                   onChange={(e) => setNewCommentText(e.target.value)}
                   className="w-full min-h-[120px] p-4 sm:p-6 text-base sm:text-lg rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-slate-200 border-b-4 sm:border-b-8 focus:border-me-purple transition-all resize-none outline-none"
@@ -712,7 +870,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                     variant="ghost" 
                     size="icon" 
                     className="rounded-full text-slate-300 hover:text-me-purple hover:bg-me-purple/5"
-                    title="Anexar Arquivo"
+                    title={t('attachFile')}
                     onClick={handleFileClick}
                   >
                     <Paperclip className="w-5 h-5" />
@@ -722,7 +880,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                     variant="ghost" 
                     size="icon" 
                     className="rounded-full text-slate-300 hover:text-me-purple hover:bg-me-purple/5"
-                    title="Adicionar Link"
+                    title={t('addLink')}
                     onClick={handleAddLink}
                   >
                     <LinkIcon className="w-5 h-5" />
@@ -734,7 +892,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 variant="default" 
                 className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] font-black uppercase tracking-widest bg-me-purple hover:bg-purple-700 border-b-4 sm:border-b-8 border-me-purple-dark shadow-lg"
               >
-                <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" /> Salvar Nota
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" /> {t('saveNote')}
               </Button>
             </form>
 
@@ -742,14 +900,14 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             <div className="space-y-4 sm:space-y-6 max-h-[400px] overflow-y-auto pr-2 sm:pr-4 custom-scrollbar">
               {(task.comments || []).length === 0 ? (
                 <div className="py-10 sm:py-16 text-center border-4 border-dashed border-slate-100 rounded-[2rem] sm:rounded-[3rem] bg-slate-50/30">
-                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">Nenhuma nota registrada.</p>
+                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">{t('noNotes')}</p>
                 </div>
               ) : (
                 [...(task.comments || [])].reverse().map((comment) => (
                   <div key={comment.id} className="bg-white border-2 sm:border-4 border-slate-100 border-b-4 sm:border-b-8 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] sm:text-xs font-black text-me-purple uppercase tracking-widest">{comment.author}</span>
-                        <span className="text-[10px] sm:text-xs font-bold text-slate-400">{new Date(comment.createdAt).toLocaleString('pt-BR')}</span>
+                        <span className="text-[10px] sm:text-xs font-bold text-slate-400">{new Date(comment.createdAt).toLocaleString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES')}</span>
                       </div>
                     <p className="text-sm sm:text-base font-bold text-slate-600 leading-relaxed whitespace-pre-wrap">
                       {renderTextWithLinks(comment.text)}
@@ -798,13 +956,13 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
           <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter px-2 sm:px-4">
               <History className="w-6 h-6 sm:w-8 sm:h-8 text-slate-900" />
-              Histórico de Atividades
+              {t('historyTitle')}
             </h4>
 
             <div className="relative space-y-6 sm:space-y-8 before:absolute before:inset-0 before:ml-5 sm:before:ml-7 before:-translate-x-px before:h-full before:w-1 before:bg-slate-100 before:rounded-full px-2 sm:px-4">
               {(task.history || []).length === 0 ? (
                 <div className="py-10 sm:py-16 text-center border-4 border-dashed border-slate-100 rounded-[2rem] sm:rounded-[3rem] bg-slate-50/30 ml-10 sm:ml-14">
-                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">Nenhuma atividade registrada ainda.</p>
+                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">{t('noHistory')}</p>
                 </div>
               ) : (
                 [...(task.history || [])].reverse().map((entry) => (
@@ -815,11 +973,53 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                     <div className="flex-1 pt-0.5 sm:pt-1 ml-8 sm:ml-10">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4 mb-1">
                         <span className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">{entry.action}</span>
-                        <span className="text-[10px] sm:text-xs font-bold text-slate-400">{new Date(entry.timestamp).toLocaleString('pt-BR')}</span>
+                        <span className="text-[10px] sm:text-xs font-bold text-slate-400">{new Date(entry.timestamp).toLocaleString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES')}</span>
                       </div>
                       {entry.details && (
                         <p className="text-[10px] sm:text-xs font-bold text-slate-500 italic">{entry.details}</p>
                       )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ABA DE SESSÕES DE FOCO */}
+        {activeTab === 'focus' && (
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter px-2 sm:px-4">
+              <Timer className="w-6 h-6 sm:w-8 sm:h-8 text-duo-green" />
+              {t('focusSessionsTitle')}
+            </h4>
+
+            <div className="space-y-4 px-2 sm:px-4">
+              {(task.timeLog || []).length === 0 ? (
+                <div className="py-10 sm:py-16 text-center border-4 border-dashed border-slate-100 rounded-[2rem] sm:rounded-[3rem] bg-slate-50/30">
+                  <p className="text-base sm:text-lg font-bold text-slate-300 italic">{t('noFocusSessions')}</p>
+                </div>
+              ) : (
+                [...(task.timeLog || [])].reverse().map((session, idx) => (
+                  <div key={idx} className="bg-white border-2 sm:border-4 border-slate-100 border-b-4 sm:border-b-8 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-duo-green/10 rounded-xl flex items-center justify-center text-duo-green">
+                        <Clock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-800">
+                          {new Date(session.startTime).toLocaleDateString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES')}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          {new Date(session.startTime).toLocaleTimeString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES', { hour: '2-digit', minute: '2-digit' })} - {new Date(session.endTime).toLocaleTimeString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-duo-green italic">
+                        {Math.floor(session.duration / 60)}m {session.duration % 60}s
+                      </p>
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('duration')}</p>
                     </div>
                   </div>
                 ))
@@ -836,7 +1036,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             onClick={onClose} 
             className="rounded-xl sm:rounded-[1.5rem] px-10 sm:px-16 h-12 sm:h-16 font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-[10px] sm:text-xs border-2 sm:border-4 border-b-4 sm:border-b-8 border-slate-200 hover:bg-slate-50 active:translate-y-[4px] sm:active:translate-y-[8px] active:shadow-none transition-all"
           >
-            Fechar Centro
+            {t('closeCenter')}
           </Button>
         </div>
       </div>

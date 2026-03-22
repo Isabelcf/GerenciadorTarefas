@@ -34,7 +34,7 @@ const AccordionItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item
     ref={ref}
-    className={cn("border-b-2 border-slate-100", className)}
+    className={cn("border-b-2 border-border", className)}
     {...props}
   />
 ))
@@ -53,14 +53,14 @@ const AccordionTrigger = React.forwardRef<
       ref={ref}
       className={cn(
         /* Estilo do gatilho: flexível, texto em negrito e transição de ícone */
-        "flex flex-1 items-center justify-between py-6 font-black uppercase tracking-widest text-slate-700 transition-all hover:text-me-purple [&[data-state=open]>svg]:rotate-180",
+        "flex flex-1 items-center justify-between py-6 font-black uppercase tracking-widest text-foreground transition-all hover:text-secondary [&[data-state=open]>svg]:rotate-180",
         className
       )}
       {...props}
     >
       {children}
       {/* Ícone de seta com animação de rotação */}
-      <ChevronDown className="h-6 w-6 shrink-0 transition-transform duration-300 text-slate-300" />
+      <ChevronDown className="h-6 w-6 shrink-0 transition-transform duration-300 text-muted-foreground/30" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))
@@ -76,7 +76,7 @@ const AccordionContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Content
     ref={ref}
-    className="overflow-hidden text-base font-medium text-slate-500 transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+    className="overflow-hidden text-base font-medium text-muted-foreground transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
     {...props}
   >
     <div className={cn("pb-6 pt-0", className)}>{children}</div>

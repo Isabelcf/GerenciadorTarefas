@@ -30,22 +30,22 @@ const buttonVariants = cva(
     variants: {
       variant: {
         /* Padrão (Verde Duolingo): Fundo verde com borda inferior escura */
-        default: "bg-duo-green text-white border-b-4 border-duo-green-dark hover:bg-duo-green/90",
+        default: "bg-primary text-white border-b-4 border-primary-dark hover:bg-primary/90",
         /* Destrutivo (Vermelho): Para ações de exclusão ou perigo */
         destructive: "bg-destructive text-destructive-foreground border-b-4 border-red-700 hover:bg-destructive/90",
         /* Outline: Fundo branco com borda cinza 3D */
-        outline: "border-2 border-slate-200 bg-background hover:bg-slate-50 hover:border-slate-300 border-b-4",
+        outline: "border-2 border-border bg-background hover:bg-accent/10 hover:border-accent/30 border-b-4",
         /* Secundário (Roxo Me+): Fundo roxo com borda inferior escura */
-        secondary: "bg-me-purple text-white border-b-4 border-me-purple-dark hover:bg-me-purple/90",
+        secondary: "bg-secondary text-white border-b-4 border-secondary-dark hover:bg-secondary/90",
         /* Ghost: Botão sem fundo ou borda fixa, apenas efeito de hover */
-        ghost: "hover:bg-slate-100 text-slate-600 active:translate-y-0",
+        ghost: "hover:bg-accent/10 text-muted-foreground active:translate-y-0",
         /* Link: Estilo de link de texto tradicional */
         link: "text-primary underline-offset-4 hover:underline active:translate-y-0",
         
         /* ALIASES DA MARCA: Facilitam o uso das cores específicas do projeto */
-        duo: "bg-duo-green text-white border-b-4 border-duo-green-dark hover:bg-duo-green/90 shadow-lg",
-        me: "bg-me-blue text-white border-b-4 border-me-blue-dark hover:bg-me-blue/90 shadow-lg",
-        warning: "bg-duo-yellow text-white border-b-4 border-duo-yellow-dark hover:bg-duo-yellow/90 shadow-lg",
+        duo: "bg-primary text-white border-b-4 border-primary-dark hover:bg-primary/90 shadow-lg",
+        me: "bg-accent text-white border-b-4 border-accent-dark hover:bg-accent/90 shadow-lg",
+        warning: "bg-warning text-white border-b-4 border-warning-dark hover:bg-warning/90 shadow-lg",
       },
       size: {
         /* TAMANHOS: Controlam a altura, arredondamento e padding */

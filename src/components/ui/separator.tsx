@@ -19,7 +19,7 @@ const Separator = React.forwardRef<
       orientation={orientation}
       className={cn(
         /* Estética Soft UI: Separador ligeiramente mais grosso e arredondado para suavidade */
-        "shrink-0 bg-slate-200 rounded-full",
+        "shrink-0 bg-border rounded-full",
         orientation === "horizontal" ? "h-1 w-full" : "h-full w-1",
         className
       )}

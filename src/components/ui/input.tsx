@@ -35,13 +35,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           /* LAYOUT BASE: Flexível, altura fixa (h-14) e largura total */
           "flex h-14 w-full",
           /* ESTÉTICA SOFT UI: Cantos arredondados, fundo branco e padding interno generoso */
-          "rounded-2xl bg-white px-5 py-3 text-base font-bold text-slate-900 shadow-inner",
+          "rounded-2xl bg-card px-5 py-3 text-base font-bold text-foreground shadow-inner",
           /* EFEITO 3D: Borda cinza suave com base inferior mais grossa */
-          "border-2 border-slate-200 border-b-4",
+          "border-2 border-border border-b-4",
           /* ESTADOS DE FOCO: Muda a cor da borda para azul e remove o outline padrão do navegador */
-          "focus-visible:border-me-blue focus-visible:outline-none focus-visible:ring-0 transition-all duration-200",
+          "focus-visible:border-accent focus-visible:outline-none focus-visible:ring-0 transition-all duration-200",
           /* ESTILIZAÇÃO DO PLACEHOLDER: Texto cinza médio com peso de fonte normal */
-          "placeholder:text-slate-400 placeholder:font-medium",
+          "placeholder:text-muted-foreground/40 placeholder:font-medium",
           /* ESTILIZAÇÃO PARA INPUT DE ARQUIVO (se usado) */
           "file:border-0 file:bg-transparent file:text-sm file:font-medium",
           /* ESTADO DESABILITADO: Muda o cursor e reduz a opacidade */

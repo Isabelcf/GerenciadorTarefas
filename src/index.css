@@ -9,45 +9,35 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Mapeamento de cores baseadas em variáveis HSL para suporte a temas (claro/escuro) */
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
+  /* Mapeamento de cores baseadas em variáveis CSS para suporte a temas dinâmicos */
+  --color-background: var(--background);
+  --color-foreground: var(--text);
+  --color-foreground-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-secondary-dark: var(--secondary-dark);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-success: var(--success);
+  --color-success-dark: var(--success-dark);
+  --color-warning: var(--warning);
+  --color-warning-dark: var(--warning-dark);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-shadow: var(--shadow);
 
   /* Cores customizadas para a estética Gamificada (Tons Pastéis) */
-  --color-duo-green: #86efac; /* Verde pastel */
-  --color-duo-green-dark: #4ade80; /* Sombra do verde pastel */
-  --color-duo-yellow: #fde047; /* Amarelo pastel */
-  --color-duo-yellow-dark: #facc15; /* Sombra do amarelo pastel */
-  --color-me-purple: #d8b4fe; /* Roxo pastel */
-  --color-me-purple-dark: #c084fc; /* Sombra do roxo pastel */
-  --color-me-blue: #7dd3fc; /* Azul pastel */
-  --color-me-blue-dark: #38bdf8; /* Sombra do azul pastel */
-  --color-me-orange: #fdba74; /* Laranja pastel */
-  --color-me-orange-dark: #fb923c; /* Sombra do laranja pastel */
+  --color-duo-green: var(--primary); /* Mapeia para a cor primária da paleta */
+  --color-duo-green-dark: var(--primary-dark);
+  --color-duo-yellow: var(--secondary); /* Mapeia para a cor secundária da paleta */
+  --color-duo-yellow-dark: var(--secondary-dark);
+  --color-me-purple: var(--accent); /* Mapeia para a cor de destaque da paleta */
+  --color-me-purple-dark: var(--accent-dark);
+  --color-me-blue: var(--primary); 
+  --color-me-blue-dark: var(--primary-dark);
+  --color-me-orange: var(--secondary);
+  --color-me-orange-dark: var(--secondary-dark);
 
   /* Definição de raios de borda (arredondamento) generosos para o estilo "Soft UI" */
   --radius-lg: 1.25rem;
@@ -74,67 +64,42 @@
 /* Camada base para reset de estilos e variáveis CSS globais */
 @layer base {
   :root {
-    /* Definições de cores em HSL para o tema claro */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    /* Definições de cores padrão (Azul Céu) */
+    --primary: #38bdf8;
+    --primary-dark: #0ea5e9;
+    --secondary: #fb923c;
+    --secondary-dark: #f97316;
+    --accent: #818cf8;
+    --accent-dark: #6366f1;
+    --success: #58cc02;
+    --success-dark: #46a302;
+    --warning: #ffc800;
+    --warning-dark: #e5a400;
+    --background: #f8fafc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --border: #e2e8f0;
+    --shadow: #f1f5f9;
     --radius: 1rem;
   }
 
-  /* Definições de cores para o tema escuro */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Definições de cores padrão para tema escuro (Noite Azul) */
+    --primary: #0ea5e9;
+    --primary-dark: #0284c7;
+    --secondary: #f97316;
+    --secondary-dark: #ea580c;
+    --accent: #6366f1;
+    --accent-dark: #4f46e5;
+    --success: #22c55e;
+    --success-dark: #16a34a;
+    --warning: #eab308;
+    --warning-dark: #ca8a04;
+    --background: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --border: #334155;
+    --shadow: #020617;
   }
 }
 
@@ -146,14 +111,7 @@
   }
   body {
     /* Configuração padrão do corpo da página: fundo, cor do texto e fonte sans-serif */
-    @apply bg-background text-foreground font-sans;
-  }
-}
-
-/* Sobrescrita para garantir o fundo cinza claro e suavização de fonte */
-@layer base {
-  body {
-    @apply bg-zinc-50 text-zinc-900 font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
@@ -172,9 +130,9 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e2e8f0; /* slate-200 */
+  background: var(--border); /* Usa a cor de borda do tema */
   border-radius: 20px;
-  border: 3px solid white; /* Cria um efeito de espaçamento interno */
+  border: 3px solid var(--card); /* Cria um efeito de espaçamento interno usando a cor do card */
   background-clip: content-box;
 }
 
