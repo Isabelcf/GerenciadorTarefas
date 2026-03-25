@@ -80,7 +80,7 @@ import { ReportsView } from '@/src/components/ReportsView';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 /* Importação de utilitários e componentes de UI base (Shadcn/UI style) */
-import { cn } from '@/src/lib/utils';
+import { cn, generateUUID } from '@/src/lib/utils';
 import { 
   format, 
   startOfDay, 
@@ -130,12 +130,10 @@ export default function Dashboard() {
   
   /**
    * ESTADO: LISTA DE TAREFAS
-   * Inicializa tentando ler do LocalStorage para manter os dados após o refresh.
+   * Inicializa vazia e busca do servidor no carregamento.
    */
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('tasks');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   
   /* ESTADO: Termo de busca digitado pelo usuário */
   const [search, setSearch] = useState('');
@@ -158,7 +156,14 @@ export default function Dashboard() {
   /* ESTADO: Notificações */
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     const saved = localStorage.getItem('taskflow_notifications');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved) as Notification[];
+      /* Limpeza: Remove notificações de tarefas externas mockadas que não existem mais */
+      return parsed.filter(n => !n.link?.startsWith('external-task'));
+    } catch (e) {
+      return [];
+    }
   });
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;
@@ -253,7 +258,7 @@ export default function Dashboard() {
    */
   const addNotification = (data: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
     const newNotification: Notification = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       createdAt: Date.now(),
       read: false,
       ...data
@@ -292,31 +297,52 @@ export default function Dashboard() {
   };
 
   /**
-   * EFEITO: BUSCA DADOS DO USUÁRIO
-   * Executado uma vez ao carregar a página para validar o token e pegar o nome real.
+   * EFEITO: BUSCA DADOS DO USUÁRIO E TAREFAS
+   * Executado ao carregar a página para validar o token e carregar as informações.
    */
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await fetch('/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            /* Prioriza o nome completo, senão usa o username */
-            const name = data.user.fullName || data.user.username;
-            setUserName(name);
-            localStorage.setItem('userName', name);
-          }
+        /* 1. Busca dados do perfil */
+        const userRes = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const name = userData.user.fullName || userData.user.username;
+          setUserName(name);
+          localStorage.setItem('userName', name);
+        } else if (userRes.status === 401 || userRes.status === 403) {
+          handleLogout();
+          return;
+        }
+
+        /* 2. Busca tarefas do usuário */
+        const tasksRes = await fetch('/api/tasks', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          setTasks(tasksData.tasks);
         }
       } catch (error) {
-        console.error('Erro ao buscar usuário:', error);
+        console.error('Erro ao buscar dados:', error);
+        toast.error(t('genericError'));
+      } finally {
+        setIsLoadingTasks(false);
       }
     };
-    fetchUser();
-  }, []);
+    
+    fetchData();
+  }, [navigate, t]);
 
   /**
    * FUNÇÃO: LOGOUT
@@ -329,40 +355,24 @@ export default function Dashboard() {
     navigate('/login');
   };
 
-  /**
-   * EFEITO: PERSISTÊNCIA DE TAREFAS
-   * Salva a lista de tarefas no LocalStorage sempre que houver mudanças.
-   * Usa um pequeno delay (debounce) para evitar gravações excessivas.
-   */
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [tasks]);
-
-  /**
-   * EFEITO: MOTOR DO TIMER POMODORO
-   * Roda a cada 1 segundo para atualizar o tempo das tarefas que estão com o timer ativo.
-   */
+  /* EFEITO: MOTOR DO TIMER POMODORO */
   useEffect(() => {
     const interval = setInterval(() => {
+      const now = Date.now();
+      let taskToSync: Task | null = null;
+
       setTasks(prevTasks => {
         let changed = false;
-        const now = Date.now();
         const newTasks = prevTasks.map(task => {
-          /* Só decrementa se o timer estiver rodando e a tarefa não estiver concluída */
           if (task.timerIsRunning && !task.completed) {
             changed = true;
             const currentSeconds = task.timerSeconds ?? 1500;
             const nextSeconds = currentSeconds - 1;
             const nextTotalSpent = (task.totalTimeSpent ?? 0) + 1;
             
-            /* Atualiza o log de tempo (timeLog) para relatórios detalhados */
             let newTimeLog = task.timeLog || [];
             const lastSession = newTimeLog[newTimeLog.length - 1];
             
-            /* Se a última sessão foi há menos de 5 segundos, continuamos ela. Caso contrário, nova sessão. */
             if (lastSession && (now - lastSession.endTime) < 5000) {
               const updatedSession = {
                 ...lastSession,
@@ -372,7 +382,7 @@ export default function Dashboard() {
               newTimeLog = [...newTimeLog.slice(0, -1), updatedSession];
             } else {
               const newSession = {
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 startTime: now - 1000,
                 endTime: now,
                 duration: 1
@@ -380,37 +390,19 @@ export default function Dashboard() {
               newTimeLog = [...newTimeLog, newSession];
             }
 
-            /* Se o tempo acabar, para o timer e avisa o usuário */
             if (nextSeconds <= 0) {
-              /* Efeito Sonoro: Timer Concluído */
-              try {
-                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                audio.volume = 0.5;
-                audio.play().catch(e => console.log('Erro ao tocar áudio (interação necessária):', e));
-              } catch (e) {
-                console.error('Erro ao inicializar áudio:', e);
-              }
-
-              toast.info(t('pomodoroFinishedToast').replace('{task}', task.title));
-              
-              /* Notificação Real: Timer Concluído */
-              addNotification({
-                title: t('timerFinishedTitle'),
-                message: t('timerFinishedMessage').replace('{task}', task.title),
-                type: 'system',
-                link: task.id
-              });
-
-              return { 
+              const finishedTask = { 
                 ...task, 
-                timerSeconds: 0, 
+                timerSeconds: 1500, // Reseta para 25 minutos para a próxima sessão
                 timerIsRunning: false,
+                inProgress: false, // Sessão concluída, sai do estado "Em Foco" para permitir reiniciar do card
                 totalTimeSpent: nextTotalSpent,
                 timeLog: newTimeLog
               };
+              taskToSync = finishedTask;
+              return finishedTask;
             }
             
-            /* Atualiza os segundos restantes e o tempo total acumulado */
             return { 
               ...task, 
               timerSeconds: nextSeconds,
@@ -421,17 +413,61 @@ export default function Dashboard() {
           return task;
         });
         
-        /* Só atualiza o estado se realmente houve mudança (performance) */
-        if (changed) {
-          return newTasks;
-        }
-        return prevTasks;
+        return changed ? newTasks : prevTasks;
       });
+
+      // Executa efeitos colaterais fora do updater do estado
+      if (taskToSync) {
+        const task = taskToSync as Task;
+        try {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(() => {}); // Silencia erro de autoplay
+        } catch (e) {}
+
+        toast.info(t('pomodoroFinishedToast').replace('{task}', task.title));
+        
+        addNotification({
+          title: t('timerFinishedTitle'),
+          message: t('timerFinishedMessage').replace('{task}', task.title),
+          type: 'system',
+          link: task.id
+        });
+
+        const token = localStorage.getItem('token');
+        fetch(`/api/tasks/${task.id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(task)
+        }).catch(e => console.error('Erro ao sincronizar timer:', e));
+      }
     }, 1000);
     
-    /* Limpa o intervalo ao desmontar o componente */
     return () => clearInterval(interval);
-  }, []);
+  }, [t]);
+
+  /* EFEITO: SINCRONIZAÇÃO PERIÓDICA DO TIMER (Debounced) */
+  useEffect(() => {
+    const activeTask = tasks.find(t => t.timerIsRunning);
+    if (!activeTask) return;
+
+    const timeout = setTimeout(() => {
+      const token = localStorage.getItem('token');
+      fetch(`/api/tasks/${activeTask.id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(activeTask)
+      }).catch(e => console.error('Erro ao salvar progresso do timer:', e));
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [tasks]);
 
   /**
    * EFEITO: SINCRONIZAÇÃO DE MODAL
@@ -509,90 +545,173 @@ export default function Dashboard() {
 
   /**
    * FUNÇÃO: ADICIONAR TAREFA
-   * Cria um novo objeto de tarefa com ID único e salva na lista.
+   * Cria um novo objeto de tarefa, salva no servidor e atualiza a lista local.
    */
-  const handleAddTask = (data: TaskFormData) => {
+  const handleAddTask = async (data: TaskFormData) => {
+    const token = localStorage.getItem('token');
     const newTask: Task = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       ...data,
       completed: false,
       inProgress: data.inProgress || false,
       createdAt: Date.now(),
-      source: 'local', /* Identifica que foi criada manualmente aqui */
+      source: 'local',
       history: [{
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         action: t('missionCreatedAction'),
         timestamp: Date.now()
       }]
     };
 
-    setTasks([newTask, ...tasks]);
-    setIsModalOpen(false); /* Fecha o modal após criar */
-    toast.success(t('missionAddedToast'));
-    /* Notificação removida conforme solicitação: usuário dono não recebe notificação ao criar */
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newTask)
+      });
+
+      if (!response.ok) throw new Error();
+
+      setTasks(prevTasks => [newTask, ...prevTasks]);
+      setIsModalOpen(false);
+      toast.success(t('missionAddedToast'));
+    } catch (error) {
+      toast.error(t('genericError'));
+    }
   };
 
   /**
    * FUNÇÃO: ALTERNAR CONCLUSÃO
-   * Marca como concluída ou volta para pendente.
+   * Marca como concluída ou volta para pendente no servidor.
    */
-  const toggleTask = (id: string) => {
-    let completedTaskTitle = '';
-    setTasks(tasks.map(t_task => {
-      if (t_task.id === id) {
-        const isCompleting = !t_task.completed;
-        completedTaskTitle = t_task.title;
-        const newEntry = {
-          id: crypto.randomUUID(),
-          action: isCompleting ? t('missionCompletedAction') : t('missionReopenedAction'),
-          timestamp: Date.now()
-        };
+  const toggleTask = async (id: string) => {
+    const token = localStorage.getItem('token');
+    const task = tasks.find(t_task => t_task.id === id);
+    if (!task) return;
 
-        /* Notificação removida conforme solicitação: apenas para integrações/timer/feriados */
-        
-        return { 
-          ...t_task, 
-          completed: isCompleting, 
-          inProgress: false, 
-          timerIsRunning: false,
-          history: [...(t_task.history || []), newEntry]
-        };
+    const isCompleting = !task.completed;
+    const newEntry = {
+      id: generateUUID(),
+      action: isCompleting ? t('missionCompletedAction') : t('missionReopenedAction'),
+      timestamp: Date.now()
+    };
+
+    const updatedTask = { 
+      ...task, 
+      completed: isCompleting, 
+      inProgress: false, 
+      timerIsRunning: false,
+      history: [...(task.history || []), newEntry]
+    };
+
+    try {
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedTask)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro ao alternar tarefa:', response.status, errorData);
+        throw new Error(errorData.error || 'Erro ao alternar tarefa');
       }
-      return t_task;
-    }));
+
+      setTasks(prevTasks => prevTasks.map(t_task => t_task.id === id ? updatedTask : t_task));
+      
+      if (isCompleting) {
+        toast.success(t('missionCompletedToast'));
+      } else {
+        toast.info(t('missionReopenedToast'));
+      }
+    } catch (error) {
+      console.error('Erro na função toggleTask:', error);
+      toast.error(t('genericError'));
+    }
   };
 
   /**
    * FUNÇÃO: INGRESSAR NA TAREFA
-   * Define o status como "Em Progresso" (Em Foco).
+   * Define o status como "Em Progresso" (Em Foco) no servidor.
    */
-  const joinTask = (id: string) => {
-    setTasks(tasks.map(t_task => {
-      if (t_task.id === id) {
-        const newEntry = {
-          id: crypto.randomUUID(),
-          action: t('missionFocusedAction'),
-          timestamp: Date.now()
-        };
-        return { 
-          ...t_task, 
-          inProgress: true,
-          history: [...(t_task.history || []), newEntry]
-        };
+  const joinTask = async (id: string) => {
+    const token = localStorage.getItem('token');
+    const task = tasks.find(t_task => t_task.id === id);
+    if (!task) return;
+
+    const newEntry = {
+      id: generateUUID(),
+      action: t('missionFocusedAction'),
+      timestamp: Date.now()
+    };
+
+    const updatedTask = { 
+      ...task, 
+      inProgress: true,
+      timerIsRunning: true, // Inicia o timer automaticamente ao focar pelo card
+      timerSeconds: (task.timerSeconds && task.timerSeconds > 0) ? task.timerSeconds : 1500,
+      history: [...(task.history || []), newEntry]
+    };
+
+    try {
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedTask)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro ao ingressar na tarefa:', response.status, errorData);
+        throw new Error(errorData.error || 'Erro ao ingressar na tarefa');
       }
-      return t_task;
-    }));
-    toast.success(t('focusStartedToast'));
+
+      setTasks(prevTasks => prevTasks.map(t_task => t_task.id === id ? updatedTask : t_task));
+      toast.success(t('focusStartedToast'));
+    } catch (error) {
+      console.error('Erro na função joinTask:', error);
+      toast.error(t('genericError'));
+    }
   };
 
   /**
    * FUNÇÃO: ATUALIZAR TAREFA
-   * Recebe os dados editados de uma tarefa e atualiza a lista.
+   * Recebe os dados editados de uma tarefa e atualiza no servidor.
    */
-  const handleUpdateTask = (updatedTask: Task) => {
-    setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
-    if (selectedTask?.id === updatedTask.id) {
-      setSelectedTask(updatedTask);
+  const handleUpdateTask = async (updatedTask: Task) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`/api/tasks/${updatedTask.id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedTask)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro ao atualizar tarefa:', response.status, errorData);
+        throw new Error(errorData.error || 'Erro ao atualizar tarefa');
+      }
+
+      setTasks(prevTasks => prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+      if (selectedTask?.id === updatedTask.id) {
+        setSelectedTask(updatedTask);
+      }
+    } catch (error) {
+      console.error('Erro na função handleUpdateTask:', error);
+      toast.error(t('genericError'));
     }
   };
 
@@ -611,6 +730,7 @@ export default function Dashboard() {
    */
   const handleSync = async () => {
     setIsSyncing(true);
+    const token = localStorage.getItem('token');
     try {
       /* Recupera as chaves de API salvas no navegador */
       const savedKeys = localStorage.getItem('taskflow_api_keys');
@@ -618,7 +738,10 @@ export default function Dashboard() {
 
       const response = await fetch('/api/integrations/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ apiKeys }),
       });
       
@@ -627,6 +750,11 @@ export default function Dashboard() {
       const data = await response.json();
       const integratedTasks = data.tasks as Task[];
       
+      /* Verifica se existe pelo menos uma chave de API com valor preenchido */
+      const hasActiveIntegration = apiKeys && Object.values(apiKeys).some((config: any) => 
+        Object.values(config).some((val: any) => typeof val === 'string' && val.trim().length > 0)
+      );
+
       /* Detectar novas missões e comentários para notificar o usuário */
       integratedTasks.forEach(externalTask => {
         const existingTask = tasks.find(t_task => t_task.id === externalTask.id);
@@ -663,14 +791,19 @@ export default function Dashboard() {
         return [...localOnly, ...integratedTasks];
       });
       
-      toast.success(t('syncSuccessToast').replace('{count}', String(integratedTasks.length)));
+      if (integratedTasks.length > 0) {
+        toast.success(t('syncSuccessToast').replace('{count}', String(integratedTasks.length)));
 
-      /* Notificação Real: Sincronização */
-      addNotification({
-        title: t('syncFinishedTitle'),
-        message: t('syncFinishedMessage').replace('{count}', String(integratedTasks.length)),
-        type: 'integration'
-      });
+        /* Notificação Real: Sincronização */
+        addNotification({
+          title: t('syncFinishedTitle'),
+          message: t('syncFinishedMessage').replace('{count}', String(integratedTasks.length)),
+          type: 'integration'
+        });
+      } else {
+        /* Se não houver tarefas novas (ou nenhuma integração), apenas avisa que está tudo em dia */
+        toast.success(t('syncSuccessToast').replace('{count}', '0'));
+      }
     } catch (error) {
       console.error("Erro de sincronização:", error);
       toast.error(t('syncConnectionError'));
@@ -681,11 +814,23 @@ export default function Dashboard() {
 
   /**
    * FUNÇÃO: EXCLUIR TAREFA
-   * Remove permanentemente uma tarefa da lista.
+   * Remove permanentemente uma tarefa no servidor.
    */
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(t_task => t_task.id !== id));
-    toast.success(t('missionRemovedToast'));
+  const deleteTask = async (id: string) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error();
+
+      setTasks(prevTasks => prevTasks.filter(t_task => t_task.id !== id));
+      toast.success(t('missionRemovedToast'));
+    } catch (error) {
+      toast.error(t('genericError'));
+    }
   };
 
   return (
@@ -754,7 +899,6 @@ export default function Dashboard() {
             />
             <NavItem icon={CalendarIcon} label={t('calendar')} collapsed={isSidebarCollapsed && !isMobileMenuOpen} onClick={() => navigate('/calendar')} />
             <NavItem icon={Share2} label={t('integrations')} collapsed={isSidebarCollapsed && !isMobileMenuOpen} onClick={() => { setIsIntegrationsModalOpen(true); setIsMobileMenuOpen(false); }} />
-            <NavItem icon={Settings} label={t('settings')} collapsed={isSidebarCollapsed && !isMobileMenuOpen} onClick={() => navigate('/profile')} />
           </nav>
 
           {/* Rodapé da Sidebar com Perfil do Usuário */}
@@ -1188,7 +1332,7 @@ function DashboardAnalytics({ tasks, userName, greeting, stats }: {
           </div>
           <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('filterTimeAnalysis')}</span>
         </div>
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex gap-1 md:gap-2 w-full md:w-auto overflow-x-auto no-scrollbar flex-nowrap justify-center pb-2">
           {(['day', 'week', 'month', 'year'] as const).map((p) => (
             <Button
               key={p}
@@ -1196,7 +1340,7 @@ function DashboardAnalytics({ tasks, userName, greeting, stats }: {
               size="sm"
               onClick={() => setPeriod(p)}
               className={cn(
-                "rounded-xl font-black uppercase tracking-widest text-[10px] px-6 h-10 transition-all",
+                "flex-1 md:flex-none rounded-xl font-black uppercase tracking-widest text-[9px] md:text-[10px] px-3 md:px-6 h-9 md:h-10 transition-all whitespace-nowrap shrink-0",
                 period === p ? "shadow-[0_4px_0_0_#1e40af]" : "text-slate-400"
               )}
             >
@@ -1485,11 +1629,11 @@ function MyTasksView({
       {/* CONTROLES: Filtros por abas e Barra de Busca */}
       <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-center justify-between">
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)} className="w-full lg:w-auto min-w-0">
-          <TabsList className="bg-card p-1 md:p-2 rounded-[1.5rem] md:rounded-[2.5rem] border-2 border-border shadow-[0_6px_0_0_var(--shadow)] md:shadow-[0_8px_0_0_var(--shadow)] h-12 md:h-20 flex gap-1 md:gap-2 w-full overflow-x-auto no-scrollbar">
-            <TabsTrigger value="all" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-primary data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--primary-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0">{t('all')}</TabsTrigger>
-            <TabsTrigger value="pending" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-warning data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--warning-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0">{t('todo')}</TabsTrigger>
-            <TabsTrigger value="in-progress" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--accent-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0">{t('focus')}</TabsTrigger>
-            <TabsTrigger value="completed" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-success data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--success-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0">{t('done')}</TabsTrigger>
+          <TabsList className="bg-card p-1 md:p-2 rounded-[1.5rem] md:rounded-[2.5rem] border-2 border-border shadow-[0_6px_0_0_var(--shadow)] md:shadow-[0_8px_0_0_var(--shadow)] h-auto min-h-[3rem] md:min-h-[5rem] flex gap-1 md:gap-2 w-full overflow-x-auto no-scrollbar pb-3 md:pb-4">
+            <TabsTrigger value="all" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-primary data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--primary-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0 shrink-0">{t('all')}</TabsTrigger>
+            <TabsTrigger value="pending" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-warning data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--warning-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0 shrink-0">{t('todo')}</TabsTrigger>
+            <TabsTrigger value="in-progress" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--accent-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0 shrink-0">{t('focus')}</TabsTrigger>
+            <TabsTrigger value="completed" className="flex-1 lg:flex-none rounded-xl md:rounded-3xl data-[state=active]:bg-success data-[state=active]:text-background data-[state=active]:shadow-[0_3px_0_0_var(--success-dark)] font-black uppercase tracking-widest text-[7px] xs:text-[8px] md:text-[10px] px-2 md:px-8 transition-all min-w-0 shrink-0">{t('done')}</TabsTrigger>
           </TabsList>
         </Tabs>
 

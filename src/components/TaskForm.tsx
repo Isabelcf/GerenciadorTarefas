@@ -202,7 +202,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
 
   return (
     /* Formulário com espaçamento vertical entre os campos */
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-8 p-1 sm:p-2 pb-6 sm:pb-10 overflow-x-hidden">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-8 p-1 sm:p-2 pb-6 sm:pb-10 overflow-x-hidden custom-scrollbar">
       
       {/* CAMPO: TÍTULO DA MISSÃO */}
       <div className="space-y-1.5 sm:space-y-3">
@@ -214,7 +214,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
           value={formData.title}
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           placeholder={t('missionTitlePlaceholder')}
-          className="bg-card h-12 sm:h-14 text-base sm:text-lg rounded-xl sm:rounded-2xl px-3 sm:px-5 border-2 border-border border-b-4"
+          className="bg-card h-12 sm:h-16 text-base sm:text-lg rounded-xl sm:rounded-2xl px-3 sm:px-6 border-2 border-border border-b-4 sm:border-b-8 focus-visible:ring-primary transition-all focus:translate-y-[2px] focus:shadow-none"
         />
       </div>
 
@@ -231,9 +231,9 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
             placeholder={t('missionDetailsPlaceholder')}
             className={cn(
               /* Estilização manual para o textarea seguir o padrão Soft UI */
-              "flex min-h-[100px] sm:min-h-[150px] w-full rounded-xl sm:rounded-2xl bg-card px-3 sm:px-5 py-3 sm:py-4 text-base sm:text-base font-bold",
-              "border-2 border-border border-b-4 focus-visible:border-primary pb-16",
-              "placeholder:text-foreground-muted placeholder:font-medium focus:outline-none transition-all resize-none shadow-inner text-foreground"
+              "flex min-h-[120px] sm:min-h-[180px] w-full rounded-xl sm:rounded-[2rem] bg-card px-4 sm:px-6 py-4 sm:py-5 text-base sm:text-lg font-bold",
+              "border-2 border-border border-b-4 sm:border-b-8 focus-visible:border-primary pb-16",
+              "placeholder:text-foreground-muted placeholder:font-medium focus:outline-none transition-all resize-none shadow-inner text-foreground focus:translate-y-[2px] focus:shadow-none"
             )}
           />
           
@@ -348,7 +348,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
                 }
               }}
             >
-              <SelectTrigger className="h-12 sm:h-14 rounded-2xl border-2 border-border border-b-4 bg-card font-bold px-3 sm:px-5 shadow-sm text-sm sm:text-base text-foreground">
+              <SelectTrigger className="h-12 sm:h-16 rounded-xl sm:rounded-2xl border-2 border-border border-b-4 sm:border-b-8 bg-card font-black px-4 sm:px-6 shadow-sm text-sm sm:text-lg text-foreground transition-all active:translate-y-[2px] active:shadow-none">
                 <SelectValue placeholder={t('categoryPlaceholder')} />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-2 border-border shadow-2xl bg-card">
@@ -373,7 +373,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
             value={formData.priority}
             onValueChange={(value: Priority) => setFormData(prev => ({ ...prev, priority: value }))}
           >
-            <SelectTrigger className="h-12 sm:h-14 rounded-2xl border-2 border-border border-b-4 bg-card font-bold px-3 sm:px-5 shadow-sm text-sm sm:text-base text-foreground">
+            <SelectTrigger className="h-12 sm:h-16 rounded-xl sm:rounded-2xl border-2 border-border border-b-4 sm:border-b-8 bg-card font-black px-4 sm:px-6 shadow-sm text-sm sm:text-lg text-foreground transition-all active:translate-y-[2px] active:shadow-none">
               <SelectValue placeholder={t('priorityPlaceholder')} />
             </SelectTrigger>
             <SelectContent className="rounded-2xl border-2 border-border shadow-2xl bg-card">
@@ -416,7 +416,7 @@ export const TaskForm = ({ onSubmit }: TaskFormProps) => {
         type="submit" 
         variant="duo" 
         size="lg" 
-        className="w-full h-14 sm:h-20 text-lg sm:text-2xl rounded-xl sm:rounded-[2rem] shadow-[0_6px_0_0_#46a302] sm:shadow-[0_10px_0_0_#46a302] active:shadow-none active:translate-y-[6px] sm:active:translate-y-[10px] transition-all"
+        className="w-full h-14 sm:h-20 text-lg sm:text-2xl rounded-xl sm:rounded-[2rem] shadow-[0_6px_0_0_var(--primary-dark)] sm:shadow-[0_10px_0_0_var(--primary-dark)] active:shadow-none active:translate-y-[6px] sm:active:translate-y-[10px] transition-all"
       >
         <Plus className="w-5 h-5 sm:w-8 sm:h-8 mr-2" />
         {t('addMission')}

@@ -59,6 +59,12 @@ export default function Signup() {
       return toast.error(t('passwordsDoNotMatch'));
     }
 
+    /* VALIDAÇÃO: Política de Senha (Mínimo 8 caracteres, letras e números) */
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return toast.error(t('passwordPolicyError') || 'A senha deve ter pelo menos 8 caracteres, incluindo letras e números.');
+    }
+
     /* Inicia o estado de carregamento */
     setIsLoading(true);
     

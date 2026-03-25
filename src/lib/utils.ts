@@ -25,3 +25,20 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/**
+ * FUNÇÃO: generateUUID
+ * 
+ * Gera um identificador único universal (UUID) de forma segura.
+ * Tenta usar a API nativa do navegador (crypto.randomUUID) e, se não estiver disponível
+ * (ex: contextos não seguros), utiliza um fallback baseado em Math.random e Date.
+ * 
+ * @returns Uma string contendo um UUID único.
+ */
+export function generateUUID() {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  // Fallback para ambientes sem suporte nativo
+  return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+}

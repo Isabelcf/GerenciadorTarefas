@@ -23,6 +23,7 @@ import Signup from '@/src/pages/Signup';
 import Profile from '@/src/pages/Profile';
 import Calendar from '@/src/pages/Calendar';
 import ForgotPassword from '@/src/pages/ForgotPassword';
+import ResetPassword from '@/src/pages/ResetPassword';
 
 /**
  * COMPONENTE: ProtectedRoute
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         
         {/* Rotas Protegidas: Perfil e Calendário */}
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

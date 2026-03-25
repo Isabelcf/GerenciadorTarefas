@@ -109,8 +109,9 @@ export const translations: Translations = {
   addTask: { pt: 'Adicionar Missão', en: 'Add Mission', es: 'Añadir Misión' },
   new: { pt: 'Nova', en: 'New', es: 'Nueva' },
   pending: { pt: 'Pendentes', en: 'Pending', es: 'Pendientes' },
-  inFocus: { pt: 'Em Foco', en: 'In Focus', es: 'En Foco' },
+  inFocus: { pt: 'Em foco', en: 'In focus', es: 'En foco' },
   completedBadge: { pt: 'Concluída', en: 'Completed', es: 'Completada' },
+  focusBadge: { pt: 'Em foco', en: 'In focus', es: 'En foco' },
   searchPlaceholder: { pt: 'Buscar missões...', en: 'Search missions...', es: 'Buscar misiones...' },
   missionTitle: { pt: 'Título da Missão', en: 'Mission Title', es: 'Título de la Misión' },
   missionTitlePlaceholder: { pt: 'Ex: Dominar o mundo, Estudar React...', en: 'Ex: Rule the world, Study React...', es: 'Ej: Dominar el mundo, Estudiar React...' },
@@ -207,6 +208,7 @@ export const translations: Translations = {
   // Integrations
   connectWorlds: { pt: 'Conectar Mundos', en: 'Connect Worlds', es: 'Conectar Mundos' },
   centralizeMissions: { pt: 'Centralize todas as suas missões conectando suas ferramentas favoritas ao seu Centro de Comando.', en: 'Centralize all your missions by connecting your favorite tools to your Command Center.', es: 'Centraliza todas tus misiones conectando tus herramientas favoritas a tu Centro de Mando.' },
+  clickup: { pt: 'ClickUp', en: 'ClickUp', es: 'ClickUp' },
   googleSheets: { pt: 'Google Sheets', en: 'Google Sheets', es: 'Google Sheets' },
   googleSheetsDesc: { pt: 'Sincronize tarefas de suas planilhas.', en: 'Sync tasks from your spreadsheets.', es: 'Sincroniza tareas de tus hojas de cálculo.' },
   trelloDesc: { pt: 'Importe cartões de seus quadros.', en: 'Import cards from your boards.', es: 'Importa tarjetas de tus tableros.' },
@@ -216,6 +218,7 @@ export const translations: Translations = {
   slackDesc: { pt: 'Receba notificações de tarefas.', en: 'Receive task notifications.', es: 'Recibe notificaciones de tareas.' },
   jiraDesc: { pt: 'Sincronize seus tickets e sprints.', en: 'Sync your tickets and sprints.', es: 'Sincroniza tus tickets y sprints.' },
   zendeskDesc: { pt: 'Gerencie seus tickets de suporte.', en: 'Manage your support tickets.', es: 'Gestiona tus tickets de soporte.' },
+  clickupDesc: { pt: 'Sincronize espaços e listas de tarefas.', en: 'Sync spaces and task lists.', es: 'Sincroniza espacios y listas de tareas.' },
   googleKeepDesc: { pt: 'Sincronize suas notas e lembretes.', en: 'Sync your notes and reminders.', es: 'Sincroniza tus notas y recordatorios.' },
   connectedSuccess: { pt: 'Conectado com sucesso ao {provider}!', en: 'Successfully connected to {provider}!', es: '¡Conectado con éxito a {provider}!' },
   authError: { pt: 'Erro na autenticação. Tente novamente.', en: 'Authentication error. Try again.', es: 'Error de autenticación. Intente de nuevo.' },
@@ -273,6 +276,8 @@ export const translations: Translations = {
   syncSuccessToast: { pt: '{count} tarefas sincronizadas com sucesso! 🔄', en: '{count} tasks synced successfully! 🔄', es: '¡{count} tareas sincronizadas con éxito! 🔄' },
   syncFailed: { pt: 'Falha na sincronização ❌', en: 'Sync failed ❌', es: 'Fallo en la sincronización ❌' },
   syncConnectionError: { pt: 'Não foi possível conectar com as integrações externas.', en: 'Could not connect to external integrations.', es: 'No se conectar con las integraciones externas.' },
+  noIntegrationsConnected: { pt: 'Nenhuma integração ativa 🛡️', en: 'No active integrations 🛡️', es: 'Sin integraciones activas 🛡️' },
+  connectIntegrationsFirst: { pt: 'Conecte um serviço (Trello, Sheets, etc) para sincronizar suas tarefas.', en: 'Connect a service (Trello, Sheets, etc) to sync your tasks.', es: 'Conecte un servicio (Trello, Sheets, etc) para sincronizar sus tareas.' },
   syncFinishedTitle: { pt: 'Sincronização Concluída! 🔄', en: 'Sync Finished! 🔄', es: '¡Sincronización Terminada! 🔄' },
   syncFinishedMessage: { pt: '{count} tarefas foram atualizadas das suas integrações externas.', en: '{count} tasks were updated from your external integrations.', es: '{count} tareas fueron actualizadas desde sus integraciones externas.' },
   newMissionTitle: { pt: 'Nova Missão em {source}! 🚀', en: 'New Mission in {source}! 🚀', es: '¡Nueva Misión en {source}! 🚀' },
@@ -345,7 +350,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string, params?: Record<string, string | number>): string => {
     if (!translations[key]) {
-      console.warn(`Translation key not found: ${key}`);
       return key;
     }
     let text = translations[key][language];

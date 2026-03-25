@@ -94,6 +94,7 @@ export function IntegrationsModal({ isOpen, onClose, onSync, onAddNotification }
     { id: 'hubspot', name: 'HubSpot', description: 'hubspotDesc', icon: BarChart3, category: 'crm', connected: false },
     { id: 'slack', name: 'Slack', description: 'slackDesc', icon: MessageSquare, category: 'comunicacao', connected: false },
     { id: 'jira', name: 'Jira', description: 'jiraDesc', icon: Layout, category: 'tarefas', connected: false },
+    { id: 'clickup', name: 'clickup', description: 'clickupDesc', icon: Layout, category: 'tarefas', connected: false },
     { id: 'zendesk', name: 'Zendesk', description: 'zendeskDesc', icon: MessageSquare, category: 'crm', connected: false },
     { id: 'google-keep', name: 'Google Keep', description: 'googleKeepDesc', icon: StickyNote, category: 'tarefas', connected: false },
   ]);
@@ -111,6 +112,7 @@ export function IntegrationsModal({ isOpen, onClose, onSync, onAddNotification }
       hubspot: { key: '' },
       slack: { webhook: '' },
       jira: { host: '', email: '', apiToken: '' },
+      clickup: { apiToken: '', teamId: '' },
       zendesk: { subdomain: '', email: '', apiToken: '' },
       'google-keep': { clientId: '', clientSecret: '' }
     };
@@ -208,7 +210,6 @@ export function IntegrationsModal({ isOpen, onClose, onSync, onAddNotification }
     setIsSyncing(true);
     try {
       await onSync(); /* Chama a função de sincronização passada pelo Dashboard */
-      toast.success(t('syncSuccess'));
     } catch (error) {
       toast.error(t('syncError'));
     } finally {
@@ -353,6 +354,30 @@ export function IntegrationsModal({ isOpen, onClose, onSync, onAddNotification }
                           </div>
                         )}
 
+                        {integration.id === 'clickup' && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <div className="space-y-2 sm:space-y-3">
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-foreground-muted ml-2 sm:ml-3">API Token</Label>
+                              <Input 
+                                value={apiKeys.clickup.apiToken} 
+                                onChange={(e) => handleKeyChange('clickup', 'apiToken', e.target.value)}
+                                placeholder="pk_..."
+                                type="password"
+                                className="h-12 sm:h-14 bg-card text-sm border-2 border-border"
+                              />
+                            </div>
+                            <div className="space-y-2 sm:space-y-3">
+                              <Label className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-foreground-muted ml-2 sm:ml-3">Team ID</Label>
+                              <Input 
+                                value={apiKeys.clickup.teamId} 
+                                onChange={(e) => handleKeyChange('clickup', 'teamId', e.target.value)}
+                                placeholder="1234567"
+                                className="h-12 sm:h-14 bg-card text-sm border-2 border-border"
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         {integration.id === 'zendesk' && (
                           <div className="grid grid-cols-1 gap-4 sm:gap-6">
                             <div className="space-y-2 sm:space-y-3">
@@ -393,6 +418,14 @@ export function IntegrationsModal({ isOpen, onClose, onSync, onAddNotification }
                           variant="me"
                           className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm shadow-[0_4px_0_0_var(--primary-dark)] sm:shadow-[0_6px_0_0_var(--primary-dark)] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[6px]"
                           onClick={() => {
+                            if (!isConfigured(integration.id)) {
+                              toast.error(t('error'), {
+                                description: t('connectIntegrationsFirst')
+                              });
+                              return;
+                            }
+                            
+                            setIntegrations(prev => prev.map(i => i.id === integration.id ? { ...i, connected: true } : i));
                             setExpandedId(null);
                             toast.success(t('settingsSaved', { name: t(integration.name) !== integration.name ? t(integration.name) : integration.name }));
                             

@@ -55,7 +55,7 @@ import { Separator } from "@/src/components/ui/separator";
 /* Importação do sistema de notificações Toast */
 import { toast } from 'sonner';
 /* Utilitário para manipulação inteligente de classes CSS */
-import { cn } from "@/src/lib/utils";
+import { cn, generateUUID } from "@/src/lib/utils";
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -73,6 +73,105 @@ interface TaskDetailsModalProps {
 /**
  * COMPONENTE: TaskDetailsModal
  */
+/**
+ * COMPONENTE AUXILIAR: ChecklistItemComponent
+ * Gerencia o estado individual de cada item do checklist, incluindo o Long Press.
+ */
+interface ChecklistItemComponentProps {
+  item: ChecklistItem;
+  task: Task;
+  toggleChecklistItem: (id: string) => void;
+  updateChecklistItemText: (id: string, text: string) => void;
+  deleteChecklistItem: (id: string) => void;
+}
+
+const ChecklistItemComponent: React.FC<ChecklistItemComponentProps> = ({ 
+  item, 
+  task, 
+  toggleChecklistItem, 
+  updateChecklistItemText, 
+  deleteChecklistItem 
+}) => {
+  const [isLongPressing, setIsLongPressing] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startPress = () => {
+    timerRef.current = setTimeout(() => {
+      setIsLongPressing(true);
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 500);
+  };
+
+  const endPress = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsLongPressing(false);
+  };
+
+  return (
+    <div 
+      className={cn(
+        "flex items-center gap-3 sm:gap-5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-b-4 sm:border-b-8 transition-all group relative",
+        item.completed 
+          ? "bg-success/5 border-success/20 border-b-success/30 opacity-70" 
+          : "bg-white border-slate-200 border-b-slate-300 hover:border-slate-300"
+      )}
+    >
+      {/* Botão de Checkbox Customizado */}
+      <button
+        onClick={() => toggleChecklistItem(item.id)}
+        disabled={task.completed}
+        className={cn(
+          "w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 sm:border-4 flex items-center justify-center transition-all shrink-0 shadow-sm sm:shadow-md",
+          item.completed ? "bg-success border-success-dark text-white" : "bg-white border-slate-200 text-transparent hover:border-slate-300"
+        )}
+      >
+        <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6" />
+      </button>
+      
+      {/* Edição de Texto do Item com suporte a Long Press para ver texto completo */}
+      <div 
+        className="flex-1 min-w-0 relative"
+        onMouseDown={startPress}
+        onMouseUp={endPress}
+        onMouseLeave={endPress}
+        onTouchStart={startPress}
+        onTouchEnd={endPress}
+      >
+        <input
+          type="text"
+          value={item.text}
+          readOnly={task.completed}
+          onChange={(e) => updateChecklistItemText(item.id, e.target.value)}
+          className={cn(
+            "w-full bg-transparent border-none focus:ring-0 text-base sm:text-lg font-black p-0 text-slate-800 truncate",
+            item.completed && "line-through text-slate-400",
+            isLongPressing && "whitespace-normal overflow-visible h-auto"
+          )}
+        />
+        
+        {/* Overlay de texto completo no Long Press (Mobile Friendly) */}
+        {isLongPressing && (
+          <div className="absolute left-0 top-full mt-2 z-50 bg-slate-900 text-white p-4 rounded-2xl text-sm font-bold shadow-2xl animate-in zoom-in-95 duration-200 max-w-[250px] break-words">
+            {item.text}
+          </div>
+        )}
+      </div>
+
+      {/* Botão de Excluir Sub-tarefa */}
+      {!task.completed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => deleteChecklistItem(item.id)}
+          className="h-8 w-8 sm:h-12 sm:w-12 rounded-lg sm:rounded-2xl text-slate-200 hover:text-red-500 hover:bg-red-50 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all border-2 border-transparent hover:border-red-100"
+        >
+          <Trash2 className="w-4 h-4 sm:w-6 sm:h-6" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDetailsModalProps) {
   const { theme, palette } = useTheme();
   const { t, language } = useLanguage();
@@ -98,7 +197,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
    */
   const addHistoryEntry = (action: string, details?: string) => {
     const newEntry = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       action,
       timestamp: Date.now(),
       details
@@ -115,7 +214,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
     if (!newItemText.trim()) return;
 
     const newItem: ChecklistItem = {
-      id: crypto.randomUUID(), /* Gera um ID único para o novo item */
+      id: generateUUID(), /* Gera um ID único para o novo item */
       text: newItemText.trim(),
       completed: false,
     };
@@ -197,7 +296,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             href={part} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-me-purple hover:underline break-all"
+            className="text-accent hover:underline break-all"
           >
             {part}
           </a>
@@ -277,7 +376,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
     if (!newCommentText.trim() && attachments.length === 0) return;
 
     const newComment = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       text: newCommentText.trim(),
       createdAt: Date.now(),
       author: t('you'),
@@ -379,7 +478,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
     onUpdateTask({
       ...task,
       timerIsRunning: isStarting,
-      timerSeconds: task.timerSeconds ?? 1500, /* 25 minutos por padrão */
+      timerSeconds: (task.timerSeconds && task.timerSeconds > 0) ? task.timerSeconds : 1500,
       inProgress: true, /* Garante que a tarefa esteja marcada como ativa */
       history: addHistoryEntry(isStarting ? t('timerStarted') : t('timerPaused'))
     });
@@ -465,13 +564,13 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             </span>
             {/* Badge de Status: Em Foco */}
             {task.inProgress && (
-              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-accent text-white uppercase tracking-[0.2em] border-b-4 border-accent-dark shadow-lg">
+              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-accent text-white tracking-[0.2em] border-b-4 border-accent-dark shadow-lg">
                 {t('inFocus')}
               </span>
             )}
             {/* Badge de Status: Concluída */}
             {task.completed && (
-              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-primary text-white uppercase tracking-[0.2em] border-b-4 border-primary-dark shadow-lg">
+              <span className="text-[8px] sm:text-[10px] font-black px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl bg-primary text-white tracking-[0.2em] border-b-4 border-primary-dark shadow-lg">
                 {t('completedBadge')}
               </span>
             )}
@@ -488,14 +587,14 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             {/* ANEXOS DA MISSÃO */}
             <div className="flex flex-wrap gap-3 px-2">
               {(task.attachments || []).map((att, index) => (
-                <div key={index} className="group relative flex items-center gap-3 bg-white border-2 border-slate-100 rounded-2xl p-3 pr-4 shadow-sm hover:border-me-blue transition-all animate-in zoom-in-95 duration-200">
+                <div key={index} className="group relative flex items-center gap-3 bg-white border-2 border-slate-100 rounded-2xl p-3 pr-4 shadow-sm hover:border-primary transition-all animate-in zoom-in-95 duration-200">
                   {att.type.startsWith('image/') ? (
                     <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100">
                       <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
                     </div>
                   ) : att.type === 'url' ? (
-                    <div className="w-10 h-10 rounded-lg bg-me-purple/10 flex items-center justify-center">
-                      <LinkIcon className="w-5 h-5 text-me-purple" />
+                    <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                      <LinkIcon className="w-5 h-5 text-accent" />
                     </div>
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
@@ -508,7 +607,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                       href={att.url} 
                       target="_blank" 
                       rel="noopener noreferrer" 
-                      className="text-xs font-black text-slate-700 hover:text-me-blue truncate max-w-[120px]"
+                      className="text-xs font-black text-slate-700 hover:text-primary truncate max-w-[120px]"
                     >
                       {att.name}
                     </a>
@@ -540,7 +639,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-12 w-12 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 hover:text-me-blue hover:border-me-blue hover:bg-me-blue/5"
+                  className="h-12 w-12 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 hover:text-primary hover:border-primary hover:bg-primary/5"
                   onClick={() => taskFileInputRef.current?.click()}
                   title={t('attachFile')}
                 >
@@ -549,7 +648,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-12 w-12 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 hover:text-me-purple hover:border-me-purple hover:bg-me-purple/5"
+                  className="h-12 w-12 rounded-2xl border-2 border-dashed border-slate-200 text-slate-300 hover:text-accent hover:border-accent hover:bg-accent/5"
                   onClick={handleAddTaskLink}
                   title={t('addLink')}
                 >
@@ -706,7 +805,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
           <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2 sm:px-4">
               <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter">
-                <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 text-me-blue" />
+                <CheckSquare className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
                 {t('checklist')}
               </h4>
               {/* Contador de Progresso */}
@@ -721,7 +820,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
             {totalCount > 0 && (
               <div className="w-full bg-slate-100 h-4 sm:h-6 rounded-full overflow-hidden border-2 sm:border-4 border-slate-200 shadow-inner">
                 <div 
-                  className="bg-me-blue h-full transition-all duration-1000 shadow-[inset_0_4px_8px_rgba(255,255,255,0.4)] relative" 
+                  className="bg-primary h-full transition-all duration-1000 shadow-[inset_0_4px_8px_rgba(255,255,255,0.4)] relative" 
                   style={{ width: `${progress}%` }}
                 >
                   {/* Efeito de brilho na barra de progresso */}
@@ -737,13 +836,13 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                   placeholder={t('nextStep')}
                   value={newItemText}
                   onChange={(e) => setNewItemText(e.target.value)}
-                  className="h-12 sm:h-16 text-base sm:text-lg rounded-xl sm:rounded-[1.5rem] border-2 sm:border-4 border-slate-200 border-b-4 sm:border-b-8 focus:border-me-blue transition-all"
+                  className="h-12 sm:h-16 text-base sm:text-lg rounded-xl sm:rounded-[1.5rem] border-2 sm:border-4 border-slate-200 border-b-4 sm:border-b-8 focus:border-primary transition-all"
                 />
                 <Button 
                   type="submit" 
                   variant="me" 
                   size="icon" 
-                  className="h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-xl sm:rounded-[1.5rem] shadow-[0_4px_0_0_#38bdf8] sm:shadow-[0_8px_0_0_#38bdf8] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[8px]"
+                  className="h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-xl sm:rounded-[1.5rem] shadow-[0_4px_0_0_var(--primary-dark)] sm:shadow-[0_8px_0_0_var(--primary-dark)] active:shadow-none active:translate-y-[4px] sm:active:translate-y-[8px]"
                 >
                   <Plus className="w-6 h-6 sm:w-8 sm:h-8" />
                 </Button>
@@ -759,51 +858,14 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 </div>
               ) : (
                 (task.checklist || []).map((item) => (
-                  <div 
+                  <ChecklistItemComponent 
                     key={item.id} 
-                    className={cn(
-                      "flex items-center gap-3 sm:gap-5 p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-b-4 sm:border-b-8 transition-all group",
-                      item.completed 
-                        ? "bg-duo-green/5 border-duo-green/20 border-b-duo-green/30 opacity-70" 
-                        : "bg-white border-slate-200 border-b-slate-300 hover:border-slate-300"
-                    )}
-                  >
-                    {/* Botão de Checkbox Customizado */}
-                    <button
-                      onClick={() => toggleChecklistItem(item.id)}
-                      disabled={task.completed}
-                      className={cn(
-                        "w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border-2 sm:border-4 flex items-center justify-center transition-all shrink-0 shadow-sm sm:shadow-md",
-                        item.completed ? "bg-duo-green border-duo-green-dark text-white" : "bg-white border-slate-200 text-transparent hover:border-slate-300"
-                      )}
-                    >
-                      <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6" />
-                    </button>
-                    
-                    {/* Edição de Texto do Item */}
-                    <input
-                      type="text"
-                      value={item.text}
-                      readOnly={task.completed}
-                      onChange={(e) => updateChecklistItemText(item.id, e.target.value)}
-                      className={cn(
-                        "flex-1 bg-transparent border-none focus:ring-0 text-base sm:text-lg font-black p-0 text-slate-800",
-                        item.completed && "line-through text-slate-400"
-                      )}
-                    />
-
-                    {/* Botão de Excluir Sub-tarefa */}
-                    {!task.completed && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteChecklistItem(item.id)}
-                        className="h-8 w-8 sm:h-12 sm:w-12 rounded-lg sm:rounded-2xl text-slate-200 hover:text-red-500 hover:bg-red-50 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all border-2 border-transparent hover:border-red-100"
-                      >
-                        <Trash2 className="w-4 h-4 sm:w-6 sm:h-6" />
-                      </Button>
-                    )}
-                  </div>
+                    item={item} 
+                    task={task} 
+                    toggleChecklistItem={toggleChecklistItem}
+                    updateChecklistItemText={updateChecklistItemText}
+                    deleteChecklistItem={deleteChecklistItem}
+                  />
                 ))
               )}
             </div>
@@ -814,7 +876,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
         {activeTab === 'comments' && (
           <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter px-2 sm:px-4">
-              <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-me-purple" />
+              <MessageSquare className="w-6 h-6 sm:w-8 sm:h-8 text-accent" />
               {t('notesLinks')}
             </h4>
 
@@ -825,7 +887,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                   placeholder={t('addNotePlaceholder')}
                   value={newCommentText}
                   onChange={(e) => setNewCommentText(e.target.value)}
-                  className="w-full min-h-[120px] p-4 sm:p-6 text-base sm:text-lg rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-slate-200 border-b-4 sm:border-b-8 focus:border-me-purple transition-all resize-none outline-none"
+                  className="w-full min-h-[120px] p-4 sm:p-6 text-base sm:text-lg rounded-[1.5rem] sm:rounded-[2rem] border-2 sm:border-4 border-slate-200 border-b-4 sm:border-b-8 focus:border-accent transition-all resize-none outline-none"
                 />
                 
                 {/* PREVIEW DE ANEXOS */}
@@ -869,7 +931,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                     type="button" 
                     variant="ghost" 
                     size="icon" 
-                    className="rounded-full text-slate-300 hover:text-me-purple hover:bg-me-purple/5"
+                    className="rounded-full text-slate-300 hover:text-accent hover:bg-accent/5"
                     title={t('attachFile')}
                     onClick={handleFileClick}
                   >
@@ -879,7 +941,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                     type="button" 
                     variant="ghost" 
                     size="icon" 
-                    className="rounded-full text-slate-300 hover:text-me-purple hover:bg-me-purple/5"
+                    className="rounded-full text-slate-300 hover:text-accent hover:bg-accent/5"
                     title={t('addLink')}
                     onClick={handleAddLink}
                   >
@@ -890,7 +952,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
               <Button 
                 type="submit" 
                 variant="default" 
-                className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] font-black uppercase tracking-widest bg-me-purple hover:bg-purple-700 border-b-4 sm:border-b-8 border-me-purple-dark shadow-lg"
+                className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] font-black uppercase tracking-widest bg-accent hover:bg-accent-dark border-b-4 sm:border-b-8 border-accent-dark shadow-lg"
               >
                 <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" /> {t('saveNote')}
               </Button>
@@ -906,7 +968,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 [...(task.comments || [])].reverse().map((comment) => (
                   <div key={comment.id} className="bg-white border-2 sm:border-4 border-slate-100 border-b-4 sm:border-b-8 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] sm:text-xs font-black text-me-purple uppercase tracking-widest">{comment.author}</span>
+                        <span className="text-[10px] sm:text-xs font-black text-accent uppercase tracking-widest">{comment.author}</span>
                         <span className="text-[10px] sm:text-xs font-bold text-slate-400">{new Date(comment.createdAt).toLocaleString(language === 'pt' ? 'pt-BR' : language === 'en' ? 'en-US' : 'es-ES')}</span>
                       </div>
                     <p className="text-sm sm:text-base font-bold text-slate-600 leading-relaxed whitespace-pre-wrap">
@@ -936,7 +998,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                                 download={att.name}
                                 className="flex items-center gap-3 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border-2 border-slate-100 transition-colors group"
                               >
-                                <Paperclip className="w-5 h-5 text-me-purple group-hover:scale-110 transition-transform" />
+                                <Paperclip className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
                                 <span className="text-xs font-bold text-slate-600">{att.name}</span>
                               </a>
                             )}
@@ -959,7 +1021,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
               {t('historyTitle')}
             </h4>
 
-            <div className="relative space-y-6 sm:space-y-8 before:absolute before:inset-0 before:ml-5 sm:before:ml-7 before:-translate-x-px before:h-full before:w-1 before:bg-slate-100 before:rounded-full px-2 sm:px-4">
+            <div className="relative space-y-6 sm:space-y-8 before:absolute before:inset-0 before:ml-5 sm:before:ml-7 before:-translate-x-px before:h-full before:w-1 before:bg-slate-100 before:rounded-full px-2 sm:px-4 max-h-[400px] overflow-y-auto pr-2 sm:pr-4 custom-scrollbar">
               {(task.history || []).length === 0 ? (
                 <div className="py-10 sm:py-16 text-center border-4 border-dashed border-slate-100 rounded-[2rem] sm:rounded-[3rem] bg-slate-50/30 ml-10 sm:ml-14">
                   <p className="text-base sm:text-lg font-bold text-slate-300 italic">{t('noHistory')}</p>
@@ -990,11 +1052,11 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
         {activeTab === 'focus' && (
           <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h4 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-3 sm:gap-4 uppercase italic tracking-tighter px-2 sm:px-4">
-              <Timer className="w-6 h-6 sm:w-8 sm:h-8 text-duo-green" />
+              <Timer className="w-6 h-6 sm:w-8 sm:h-8 text-success" />
               {t('focusSessionsTitle')}
             </h4>
 
-            <div className="space-y-4 px-2 sm:px-4">
+            <div className="space-y-4 px-2 sm:px-4 max-h-[400px] overflow-y-auto pr-2 sm:pr-4 custom-scrollbar">
               {(task.timeLog || []).length === 0 ? (
                 <div className="py-10 sm:py-16 text-center border-4 border-dashed border-slate-100 rounded-[2rem] sm:rounded-[3rem] bg-slate-50/30">
                   <p className="text-base sm:text-lg font-bold text-slate-300 italic">{t('noFocusSessions')}</p>
@@ -1003,7 +1065,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                 [...(task.timeLog || [])].reverse().map((session, idx) => (
                   <div key={idx} className="bg-white border-2 sm:border-4 border-slate-100 border-b-4 sm:border-b-8 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-duo-green/10 rounded-xl flex items-center justify-center text-duo-green">
+                      <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center text-success">
                         <Clock className="w-5 h-5" />
                       </div>
                       <div>
@@ -1016,7 +1078,7 @@ export function TaskDetailsModal({ task, isOpen, onClose, onUpdateTask }: TaskDe
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-black text-duo-green italic">
+                      <p className="text-lg font-black text-success italic">
                         {Math.floor(session.duration / 60)}m {session.duration % 60}s
                       </p>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('duration')}</p>

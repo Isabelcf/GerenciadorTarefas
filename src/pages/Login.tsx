@@ -43,6 +43,11 @@ export default function Login() {
   
   /* ESTADO: Controla o estado visual de carregamento do botão */
   const [isLoading, setIsLoading] = useState(false);
+  
+  /* ESTADO: 2FA */
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [userIdFor2FA, setUserIdFor2FA] = useState<number | null>(null);
 
   /**
    * FUNÇÃO: handleLogin
@@ -55,8 +60,29 @@ export default function Login() {
     setIsLoading(true);
     
     try {
+      if (requires2FA) {
+        const response = await axios.post('/api/auth/login/2fa', { 
+          userId: userIdFor2FA, 
+          code: twoFactorCode 
+        });
+        const { token, user } = response.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('userName', user.username);
+        toast.success(t('welcomeBack').replace('{user}', user.username));
+        navigate('/');
+        return;
+      }
+
       /* Envia as credenciais para o endpoint de login */
       const response = await axios.post('/api/auth/login', { username, password });
+      
+      if (response.data.requires2FA) {
+        setRequires2FA(true);
+        setUserIdFor2FA(response.data.userId);
+        toast.info(t('twoFactorRequired') || 'Autenticação de dois fatores necessária');
+        return;
+      }
+
       const { token, user } = response.data;
       
       /* Salva o token JWT no LocalStorage para manter o usuário logado */
@@ -100,52 +126,86 @@ export default function Login() {
         <div className="bg-card p-10 sm:p-12 rounded-[3rem] border-4 border-border border-b-[12px] shadow-2xl space-y-10">
           <form onSubmit={handleLogin} className="space-y-8">
             
-            {/* CAMPO: NOME DE USUÁRIO */}
-            <div className="space-y-3">
-              <Label htmlFor="username" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-muted-foreground/60 ml-4">
-                {t('user')}
-              </Label>
-              <div className="relative group">
-                {/* Ícone posicionado dentro do input */}
-                <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
-                <Input 
-                   id="username"
-                  type="text" 
-                  placeholder="ex: super_dev" 
-                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            {!requires2FA ? (
+              <>
+                {/* CAMPO: NOME DE USUÁRIO */}
+                <div className="space-y-3">
+                  <Label htmlFor="username" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-muted-foreground/60 ml-4">
+                    {t('user')}
+                  </Label>
+                  <div className="relative group">
+                    {/* Ícone posicionado dentro do input */}
+                    <User className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
+                    <Input 
+                       id="username"
+                      type="text" 
+                      placeholder="ex: super_dev" 
+                      className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
 
-            {/* CAMPO: SENHA */}
-            <div className="space-y-3">
-              <Label htmlFor="password" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-muted-foreground/60 ml-4">
-                {t('password')}
-              </Label>
-              <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
-                <Input 
-                  id="password"
-                  type="password" 
-                  placeholder="••••••••" 
-                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="flex justify-end px-2">
-                <Link 
-                  to="/forgot-password" 
-                  className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-muted-foreground/60 hover:text-secondary transition-colors"
+                {/* CAMPO: SENHA */}
+                <div className="space-y-3">
+                  <Label htmlFor="password" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-muted-foreground/60 ml-4">
+                    {t('password')}
+                  </Label>
+                  <div className="relative group">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
+                    <Input 
+                      id="password"
+                      type="password" 
+                      placeholder="••••••••" 
+                      className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end px-2">
+                    <Link 
+                      to="/forgot-password" 
+                      className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-muted-foreground/60 hover:text-secondary transition-colors"
+                    >
+                      {t('forgotPassword')}
+                    </Link>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* CAMPO: CÓDIGO 2FA */
+              <div className="space-y-3 animate-in fade-in zoom-in-95 duration-300">
+                <Label htmlFor="2fa-code" className="text-xs sm:text-sm font-black uppercase tracking-[0.15em] text-muted-foreground/60 ml-4">
+                  {t('twoFactorCode') || 'Código de Autenticação'}
+                </Label>
+                <div className="relative group">
+                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
+                  <Input 
+                    id="2fa-code"
+                    type="text" 
+                    placeholder="000000" 
+                    maxLength={6}
+                    className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all text-center tracking-[0.5em] font-black"
+                    value={twoFactorCode}
+                    onChange={(e) => setTwoFactorCode(e.target.value)}
+                    required
+                  />
+                </div>
+                <p className="text-[10px] font-bold text-muted-foreground/40 text-center italic">
+                  {t('enter2FACode') || 'Digite o código de 6 dígitos do seu app autenticador'}
+                </p>
+                <button 
+                  type="button"
+                  onClick={() => setRequires2FA(false)}
+                  className="w-full text-[10px] font-black uppercase tracking-widest text-secondary hover:underline mt-2"
                 >
-                  {t('forgotPassword')}
-                </Link>
+                  {t('backToLogin')}
+                </button>
               </div>
-            </div>
+            )}
 
             {/* BOTÃO DE SUBMISSÃO: Grande, roxo e com efeito de profundidade */}
             <Button 

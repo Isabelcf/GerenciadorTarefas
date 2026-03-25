@@ -7,13 +7,14 @@
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { CheckSquare, Mail, User, ArrowLeft, Send, AlertCircle } from 'lucide-react';
+import { CheckSquare, Mail, User, ArrowLeft, Send, AlertCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
 import { useLanguage } from '@/src/contexts/LanguageContext';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { motion } from 'motion/react';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -28,11 +29,11 @@ export default function ForgotPassword() {
     setErrorType('none');
     
     try {
-      const response = await axios.post('/api/auth/forgot-password', { identifier });
+      await axios.post('/api/auth/forgot-password', { identifier });
       toast.success(t('recoveryInstructionsSent').replace('{identifier}', identifier));
-      // Em um app real, aqui o usuário esperaria o e-mail. 
-      // Para o demo, vamos apenas avisar e talvez redirecionar após um tempo.
-      setTimeout(() => navigate('/login'), 3000);
+      
+      // Em produção, redirecionamos após um tempo para evitar "fishing" de usuários
+      setTimeout(() => navigate('/login'), 5000);
     } catch (error: any) {
       if (error.response?.status === 404) {
         setErrorType('not_found');

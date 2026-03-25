@@ -136,7 +136,7 @@ export function ReportsView({ tasks, onOpenTask }: ReportsViewProps) {
         </div>
 
         {/* SELETOR DE PERÍODO */}
-        <div className="bg-card p-2 rounded-[2rem] border-2 border-border shadow-[0_6px_0_0_var(--shadow)] flex gap-2">
+        <div className="bg-card p-1.5 md:p-2 rounded-[2rem] border-2 border-border shadow-[0_6px_0_0_var(--shadow)] flex gap-1 md:gap-2 w-full md:w-auto overflow-x-auto no-scrollbar flex-nowrap pb-3 md:pb-4">
           {(['day', 'week', 'month', 'year'] as Period[]).map((p) => (
             <Button
               key={p}
@@ -144,7 +144,7 @@ export function ReportsView({ tasks, onOpenTask }: ReportsViewProps) {
               size="sm"
               onClick={() => setPeriod(p)}
               className={cn(
-                "rounded-2xl font-black uppercase tracking-widest text-[10px] px-6 h-10 transition-all",
+                "flex-1 md:flex-none rounded-2xl font-black uppercase tracking-widest text-[9px] md:text-[10px] px-3 md:px-6 h-9 md:h-10 transition-all whitespace-nowrap shrink-0",
                 period === p ? "shadow-[0_4px_0_0_var(--primary-dark)]" : "text-foreground-muted hover:bg-background"
               )}
             >
