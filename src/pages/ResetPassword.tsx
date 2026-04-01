@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckSquare, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { CheckSquare, Lock, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Label } from '@/src/components/ui/label';
@@ -23,6 +23,11 @@ export default function ResetPassword() {
   const token = searchParams.get('token');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  /* ESTADOS: Controlam a visibilidade das senhas */
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
 
   const handleReset = async (e: React.FormEvent) => {
@@ -94,13 +99,20 @@ export default function ResetPassword() {
               <div className="relative group">
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
                 <Input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   placeholder="••••••••" 
-                  className="pl-14 h-14 text-lg rounded-2xl border-2 border-border focus:border-secondary transition-all"
+                  className="pl-14 pr-14 h-14 text-lg rounded-2xl border-2 border-border focus:border-secondary transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-secondary transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -111,13 +123,20 @@ export default function ResetPassword() {
               <div className="relative group">
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
                 <Input 
-                  type="password" 
+                  type={showConfirmPassword ? "text" : "password"} 
                   placeholder="••••••••" 
-                  className="pl-14 h-14 text-lg rounded-2xl border-2 border-border focus:border-secondary transition-all"
+                  className="pl-14 pr-14 h-14 text-lg rounded-2xl border-2 border-border focus:border-secondary transition-all"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-secondary transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 

@@ -15,7 +15,7 @@ import React, { useState } from 'react';
 /* Importação de hooks do React Router para navegação entre rotas */
 import { useNavigate, Link } from 'react-router-dom';
 /* Importação de ícones da biblioteca Lucide-React */
-import { CheckSquare, User, Lock, ArrowRight } from 'lucide-react';
+import { CheckSquare, User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 /* Importação de componentes de UI baseados no design system do projeto */
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -40,6 +40,9 @@ export default function Login() {
   
   /* ESTADO: Armazena a senha digitada */
   const [password, setPassword] = useState('');
+  
+  /* ESTADO: Controla a visibilidade da senha */
+  const [showPassword, setShowPassword] = useState(false);
   
   /* ESTADO: Controla o estado visual de carregamento do botão */
   const [isLoading, setIsLoading] = useState(false);
@@ -157,13 +160,20 @@ export default function Login() {
                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-secondary transition-colors" />
                     <Input 
                       id="password"
-                      type="password" 
+                      type={showPassword ? "text" : "password"} 
                       placeholder="••••••••" 
-                      className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all"
+                      className="pl-14 pr-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-secondary focus:ring-secondary/20 transition-all"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-secondary transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                   <div className="flex justify-end px-2">
                     <Link 

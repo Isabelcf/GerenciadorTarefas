@@ -15,7 +15,7 @@ import React, { useState } from 'react';
 /* Importação de hooks do React Router para navegação e links */
 import { useNavigate, Link } from 'react-router-dom';
 /* Importação de ícones da biblioteca Lucide-React para ilustrar os campos */
-import { CheckSquare, User, Lock, ArrowRight, ShieldCheck, Mail, Calendar } from 'lucide-react';
+import { CheckSquare, User, Lock, ArrowRight, ShieldCheck, Mail, Calendar, Eye, EyeOff } from 'lucide-react';
 /* Importação de componentes de UI baseados no design system Soft UI */
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
@@ -42,6 +42,10 @@ export default function Signup() {
   const [birthDate, setBirthDate] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  /* ESTADOS: Controlam a visibilidade das senhas */
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   /* ESTADO: Controla o estado visual de carregamento (loading) do botão */
   const [isLoading, setIsLoading] = useState(false);
@@ -197,13 +201,20 @@ export default function Signup() {
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 <Input 
                   id="password"
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   placeholder="••••••••" 
-                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-primary focus:ring-primary/20 transition-all"
+                  className="pl-14 pr-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-primary focus:ring-primary/20 transition-all"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -216,13 +227,20 @@ export default function Signup() {
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
                 <Input 
                   id="confirmPassword"
-                  type="password" 
+                  type={showConfirmPassword ? "text" : "password"} 
                   placeholder="••••••••" 
-                  className="pl-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-primary focus:ring-primary/20 transition-all"
+                  className="pl-14 pr-14 h-12 sm:h-14 text-base sm:text-lg rounded-2xl border-2 border-border focus:border-primary focus:ring-primary/20 transition-all"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground/30 hover:text-primary transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
